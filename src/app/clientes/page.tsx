@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { getClients } from "@/lib/actions/clients";
 import Link from "next/link";
 import { ClientsSearch } from "./clients-search";
+import { AddClientButton, EditClientButton, DeleteClientButton } from "./clients-actions";
 
 const AVATAR_COLORS = [
   "bg-brand-teal/15 text-brand-teal",
@@ -40,7 +41,10 @@ export default async function ClientesPage({
             {clientes.length} cliente{clientes.length !== 1 ? "s" : ""} registrado{clientes.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <ClientsSearch currentQuery={params.q} />
+        <div className="flex items-center gap-3">
+          <ClientsSearch currentQuery={params.q} />
+          <AddClientButton />
+        </div>
       </div>
 
       {clientes.length === 0 ? (
@@ -51,12 +55,14 @@ export default async function ClientesPage({
         <div className="bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
           <div className="divide-y divide-surface-700">
             {clientes.map((cliente: any, index: number) => (
-              <Link
+              <div
                 key={cliente.id}
-                href={`/clientes/${cliente.id}`}
-                className="px-5 py-4 card-hover cursor-pointer flex items-center justify-between block"
+                className="px-5 py-4 card-hover flex items-center justify-between"
               >
-                <div className="flex items-center gap-4">
+                <Link
+                  href={`/clientes/${cliente.id}`}
+                  className="flex items-center gap-4 flex-1 cursor-pointer"
+                >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${getAvatarColor(index)}`}>
                     {getInitials(cliente.nombre)}
                   </div>
@@ -68,8 +74,12 @@ export default async function ClientesPage({
                       {cliente.telefono || ""}
                     </div>
                   </div>
+                </Link>
+                <div className="flex items-center gap-1">
+                  <EditClientButton client={cliente} />
+                  <DeleteClientButton clientId={cliente.id} clientName={cliente.nombre} />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>

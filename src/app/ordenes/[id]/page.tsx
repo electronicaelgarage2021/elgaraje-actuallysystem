@@ -3,8 +3,13 @@ import {
   getOrderHistory,
   getOrderPayments,
 } from "@/lib/actions/orders";
+import { getClientOrders } from "@/lib/actions/clients";
 import { OrderTimeline } from "@/components/order-timeline";
 import { OrderDetailActions } from "./order-detail-actions";
+import { OrderBottomActions } from "./order-bottom-actions";
+import { PaymentHistory } from "@/components/payment-history";
+import { OrderWarranty } from "./order-warranty";
+import { DiscountSuggestion } from "@/components/discount-suggestion";
 import { EstadoBadge } from "@/components/estado-badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -19,13 +24,14 @@ export default async function OrdenDetalle({
 }) {
   const { id } = await params;
 
-  let orden: any, historial: any, pagos: any;
+  let orden: any, historial: any, pagos: any, clienteOrdenes: any[];
   try {
     [orden, historial, pagos] = await Promise.all([
       getOrder(id),
       getOrderHistory(id),
       getOrderPayments(id),
     ]);
+    clienteOrdenes = orden.cliente_id ? await getClientOrders(orden.cliente_id) : [];
   } catch {
     notFound();
   }
@@ -62,6 +68,13 @@ export default async function OrdenDetalle({
           </p>
         </div>
       </div>
+
+      {/* Discount suggestion */}
+      <DiscountSuggestion
+        clientName={cliente?.nombre || ""}
+        orderCount={clienteOrdenes.length}
+        presupuesto={orden.presupuesto}
+      />
 
       {/* Timeline */}
       <div className="bg-surface-800 border border-surface-600 rounded-xl p-5 mb-6">
@@ -241,19 +254,18 @@ export default async function OrdenDetalle({
                 </div>
               </>
             )}
+            <PaymentHistory pagos={pagos} />
           </div>
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="flex gap-2 pb-8">
-        <button className="flex-1 bg-surface-700 hover:bg-surface-600 text-gray-300 font-medium py-2.5 rounded-lg text-sm transition-colors">
-          Editar orden
-        </button>
-        <button className="flex-1 bg-brand-red/10 hover:bg-brand-red/20 text-brand-red font-medium py-2.5 rounded-lg text-sm transition-colors">
-          Cancelar reparación
-        </button>
+      {/* Warranty */}
+      <div className="bg-surface-800 border border-surface-600 rounded-xl p-5 mb-6">
+        <OrderWarranty ordenId={id} currentWarranty={orden.garantia} />
       </div>
+
+      {/* Action buttons */}
+      <OrderBottomActions ordenId={id} />
     </div>
   );
 }

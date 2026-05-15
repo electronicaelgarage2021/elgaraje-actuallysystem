@@ -30,6 +30,7 @@ export interface OrdenReparacion {
   fecha_ingreso: string;
   fecha_entrega_estimada: string | null;
   fecha_entregado: string | null;
+  garantia: string | null;
   created_at: string;
   updated_at: string;
   cliente?: Cliente;

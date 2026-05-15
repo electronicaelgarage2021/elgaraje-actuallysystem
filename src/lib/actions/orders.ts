@@ -118,6 +118,48 @@ export async function createOrder(formData: FormData) {
   return orden;
 }
 
+export async function updateOrder(id: string, formData: FormData) {
+  const db = createSupabaseServer();
+  const presupuesto = formData.get("presupuesto");
+
+  const { error } = await db
+    .from("ordenes_reparacion")
+    .update({
+      dispositivo: formData.get("dispositivo") as string,
+      problema: formData.get("problema") as string,
+      observaciones: (formData.get("observaciones") as string) || null,
+      presupuesto: presupuesto ? Number(presupuesto) : null,
+      fecha_entrega_estimada:
+        (formData.get("fecha_entrega_estimada") as string) || null,
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/");
+  revalidatePath("/ordenes");
+  revalidatePath(`/ordenes/${id}`);
+}
+
+export async function cancelOrder(id: string) {
+  const db = createSupabaseServer();
+  const { error } = await db
+    .from("ordenes_reparacion")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/");
+  revalidatePath("/ordenes");
+}
+
+export async function updateOrderWarranty(id: string, garantia: string) {
+  const db = createSupabaseServer();
+  const { error } = await db
+    .from("ordenes_reparacion")
+    .update({ garantia })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath(`/ordenes/${id}`);
+}
+
 export async function updateOrderEstado(
   ordenId: string,
   estado: EstadoOrden
@@ -166,6 +208,31 @@ export async function registerPayment(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/ordenes");
   revalidatePath(`/ordenes/${ordenId}`);
+}
+
+export async function exportOrders() {
+  const db = createSupabaseServer();
+  const { data, error } = await db
+    .from("ordenes_reparacion")
+    .select("*, cliente:clientes(nombre, telefono, dni)")
+    .order("fecha_ingreso", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getDailyCash(fecha?: string) {
+  const db = createSupabaseServer();
+  const target = fecha || new Date().toISOString().split("T")[0];
+
+  const { data, error } = await db
+    .from("pagos")
+    .select("*, orden:ordenes_reparacion(numero, dispositivo, cliente:clientes(nombre))")
+    .gte("created_at", `${target}T00:00:00`)
+    .lt("created_at", `${target}T23:59:59.999`)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
 }
 
 export async function getDashboardStats() {

@@ -60,18 +60,44 @@ export async function searchClients(term: string) {
   return data;
 }
 
+export async function createClient(formData: FormData) {
+  const db = createSupabaseServer();
+  const { data, error } = await db
+    .from("clientes")
+    .insert({
+      nombre: formData.get("nombre") as string,
+      telefono: (formData.get("telefono") as string) || null,
+      dni: (formData.get("dni") as string) || null,
+      email: (formData.get("email") as string) || null,
+      notas: (formData.get("notas") as string) || null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  revalidatePath("/clientes");
+  return data;
+}
+
 export async function updateClient(id: string, formData: FormData) {
   const db = createSupabaseServer();
   const { error } = await db
     .from("clientes")
     .update({
       nombre: formData.get("nombre") as string,
-      telefono: formData.get("telefono") as string,
+      telefono: (formData.get("telefono") as string) || null,
       dni: (formData.get("dni") as string) || null,
       email: (formData.get("email") as string) || null,
       notas: (formData.get("notas") as string) || null,
     })
     .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/clientes");
+  revalidatePath(`/clientes/${id}`);
+}
+
+export async function deleteClient(id: string) {
+  const db = createSupabaseServer();
+  const { error } = await db.from("clientes").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/clientes");
 }

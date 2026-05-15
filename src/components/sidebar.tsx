@@ -8,15 +8,22 @@ import {
   Users,
   PlusCircle,
   MapPin,
+  Columns3,
+  Wallet,
+  CalendarDays,
 } from "lucide-react";
 import { Logo } from "./logo";
+import { ThemeToggle } from "./theme-toggle";
 import { NEGOCIO } from "@/lib/constants";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ordenes", label: "Reparaciones", icon: Wrench },
+  { href: "/kanban", label: "Kanban", icon: Columns3 },
   { href: "/ordenes/nueva", label: "Nueva Orden", icon: PlusCircle },
   { href: "/clientes", label: "Clientes", icon: Users },
+  { href: "/caja", label: "Caja Diaria", icon: Wallet },
+  { href: "/calendario", label: "Calendario", icon: CalendarDays },
 ];
 
 export function Sidebar() {
@@ -39,10 +46,15 @@ export function Sidebar() {
 
       <nav className="flex-1 p-3 space-y-1">
         {NAV_ITEMS.map((item) => {
+          const exactMatch = pathname === item.href;
           const isActive =
             item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
+              ? exactMatch
+              : item.href === "/ordenes"
+                ? pathname === "/ordenes" || (pathname.startsWith("/ordenes/") && !pathname.startsWith("/ordenes/nueva"))
+                : item.href === "/clientes"
+                  ? pathname.startsWith("/clientes")
+                  : exactMatch;
           return (
             <Link
               key={item.href}
@@ -61,14 +73,17 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-surface-600">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-brand-teal/20 flex items-center justify-center text-brand-teal text-xs font-bold">
-            M
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-brand-teal/20 flex items-center justify-center text-brand-teal text-xs font-bold">
+              M
+            </div>
+            <div>
+              <div className="text-sm font-medium">Marc</div>
+              <div className="text-xs text-gray-500">Villa Carlos Paz</div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-medium">Marc</div>
-            <div className="text-xs text-gray-500">Villa Carlos Paz</div>
-          </div>
+          <ThemeToggle />
         </div>
       </div>
     </aside>

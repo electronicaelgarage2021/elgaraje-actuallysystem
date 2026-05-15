@@ -184,3 +184,36 @@ input:focus, textarea:focus, select:focus {
 .font-brand {
   font-family: 'Anton', sans-serif;
 }
+
+/* Light mode overrides */
+.light-mode {
+  --color-surface-900: #F5F5F5;
+  --color-surface-800: #FFFFFF;
+  --color-surface-700: #F0F0F0;
+  --color-surface-600: #E0E0E0;
+  --color-surface-500: #D0D0D0;
+  --background: #F5F5F5;
+  --foreground: #1A1A1A;
+  color-scheme: light;
+}
+.light-mode body {
+  background: #F5F5F5;
+  color: #1A1A1A;
+}
+.light-mode .text-gray-400 { color: #6B7280; }
+.light-mode .text-gray-500 { color: #9CA3AF; }
+.light-mode .text-gray-300 { color: #374151; }
+.light-mode .text-gray-600 { color: #4B5563; }
+.light-mode .card-hover:hover { background: #F0F0F0; }
+.light-mode .scrollbar-thin::-webkit-scrollbar-track { background: #F5F5F5; }
+.light-mode .scrollbar-thin::-webkit-scrollbar-thumb { background: #D0D0D0; }
+
+/* Shake animation for PIN error */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.animate-shake {
+  animation: shake 0.4s ease;
+}

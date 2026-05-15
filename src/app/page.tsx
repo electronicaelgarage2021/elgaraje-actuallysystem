@@ -7,6 +7,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DashboardEntregarBtn } from "@/components/dashboard-entregar-btn";
+import { ExportButton } from "@/components/export-button";
 
 export default async function Dashboard() {
   const [stats, ordenes] = await Promise.all([
@@ -41,13 +42,16 @@ export default async function Dashboard() {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-gray-400 text-sm mt-1 capitalize">{fechaHoy}</p>
         </div>
-        <Link
-          href="/ordenes/nueva"
-          className="bg-brand-teal hover:bg-brand-teal-dark text-surface-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors flex items-center gap-2 justify-center"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Nueva Orden
-        </Link>
+        <div className="flex items-center gap-2">
+          <ExportButton />
+          <Link
+            href="/ordenes/nueva"
+            className="bg-brand-teal hover:bg-brand-teal-dark text-surface-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors flex items-center gap-2 justify-center"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Nueva Orden
+          </Link>
+        </div>
       </div>
 
       {/* Stat cards */}
