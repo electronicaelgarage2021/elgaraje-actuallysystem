@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0A0A0A"/>
+  <circle cx="256" cy="230" r="140" fill="#00BFA5"/>
+  <text x="256" y="210" text-anchor="middle" fill="#E53935" font-family="system-ui" font-weight="700" font-size="36">Electronica</text>
+  <text x="256" y="265" text-anchor="middle" fill="#FFFFFF" font-family="system-ui" font-weight="900" font-size="64">EG</text>
+  <text x="256" y="430" text-anchor="middle" fill="#F5F5F5" font-family="system-ui" font-weight="900" font-size="48" letter-spacing="2">EL GARAGE</text>
+</svg>
