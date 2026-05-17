@@ -46,6 +46,7 @@ export default function NuevaOrden() {
   const [senaValue, setSenaValue] = useState("");
   const [presupuesto, setPresupuesto] = useState("");
   const [tiposSeleccionados, setTiposSeleccionados] = useState<string[]>([]);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const fechaHoy = format(new Date(), "dd/MM/yyyy", { locale: es });
 
@@ -74,16 +75,23 @@ export default function NuevaOrden() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setErrorMsg("");
     setLoading(true);
-    const fd = new FormData(e.currentTarget);
-    if (clienteSeleccionado) {
-      fd.set("cliente_id", clienteSeleccionado.id);
+    try {
+      const fd = new FormData(e.currentTarget);
+      if (clienteSeleccionado) {
+        fd.set("cliente_id", clienteSeleccionado.id);
+      }
+      if (conSena && senaValue) {
+        fd.set("sena", String(senaFinal));
+      }
+      await createOrder(fd);
+      router.push("/ordenes");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al crear la orden";
+      setErrorMsg(msg);
+      setLoading(false);
     }
-    if (conSena && senaValue) {
-      fd.set("sena", String(senaFinal));
-    }
-    await createOrder(fd);
-    router.push("/ordenes");
   }
 
   return (
@@ -445,6 +453,13 @@ export default function NuevaOrden() {
             Según Código Civil Ley 2375/2526. Se toma por ABANDONADO el bien luego de los 90 días de estadía.
           </p>
         </div>
+
+        {/* Error message */}
+        {errorMsg && (
+          <div className="bg-brand-red/10 border border-brand-red/30 rounded-lg p-3 text-sm text-brand-red">
+            {errorMsg}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3 justify-end pb-8">
