@@ -55,7 +55,7 @@ export function PinGuard({ children }: { children: React.ReactNode }) {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-surface-900 flex items-center justify-center">
+      <div className="fixed inset-0 z-[9999] bg-surface-900 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-brand-teal border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -64,7 +64,7 @@ export function PinGuard({ children }: { children: React.ReactNode }) {
   if (unlocked) return <>{children}</>;
 
   return (
-    <div className="min-h-screen bg-surface-900 flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] bg-surface-900 flex items-center justify-center">
       <div className="text-center space-y-8">
         <Logo size="lg" />
         <div>
