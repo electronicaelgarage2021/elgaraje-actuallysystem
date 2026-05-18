@@ -45,6 +45,23 @@ async function fetchTab(tabName: string): Promise<PriceItem[]> {
   return extractProducts(rows, tabName);
 }
 
+function isPriceWord(s: string): boolean {
+  const u = s.trim().toUpperCase();
+  return u === "PRECIO" || u.startsWith("PRECIO ") || u === "MAYORISTA" || u === "PVP";
+}
+
+function cleanBrand(rawCell: string, tabUpper: string): string {
+  // Strip title prefix variants:
+  //  "LISTA DE PRECIOS BYTE REPUESTOS, CONSULTAR STOCK SAMSUNG"
+  //  "LISTA DE PRECIOS (CONSULTAR STOCK)                         MARCOS SAMSUNG"
+  let brandName = rawCell.replace(/^LISTA DE PRECIOS.*?STOCK[)\s]+/i, "").trim();
+  // Strip category prefix (tab name)
+  if (brandName.toUpperCase().startsWith(tabUpper + " ")) {
+    brandName = brandName.slice(tabUpper.length).trim();
+  }
+  return brandName;
+}
+
 function extractProducts(rows: string[][], categoria: string): PriceItem[] {
   if (rows.length < 2) return [];
 
@@ -57,33 +74,57 @@ function extractProducts(rows: string[][], categoria: string): PriceItem[] {
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r];
 
-    // Check if this row looks like a header (has cells followed by a price column)
+    // PASS 1: explicit header with PRECIO at +1 or +2 (handles MOTOROLA gap in PLACAS DE CARGA)
     const possibleBrands: { name: string; modelCol: number; priceCol: number }[] = [];
     for (let i = 0; i < row.length - 1; i++) {
       const rawCell = row[i]?.trim() || "";
-      const next = row[i + 1]?.trim().toUpperCase() || "";
       if (!rawCell) continue;
-      // Accept "PRECIO", "PRECIO MAYORISTA", "PRECIO PVP", "MAYORISTA", "PVP", etc.
-      const isPriceCol = next === "PRECIO" || next.startsWith("PRECIO ") || next === "MAYORISTA" || next === "PVP";
-      if (!isPriceCol) continue;
+      // Accept PRECIO at col+1 OR col+2 (skip 1 empty col)
+      const next1 = row[i + 1]?.trim() || "";
+      const next2 = row[i + 2]?.trim() || "";
+      let hasPriceHeader = false;
+      if (isPriceWord(next1)) hasPriceHeader = true;
+      else if (!next1 && next2 && isPriceWord(next2)) hasPriceHeader = true;
+      if (!hasPriceHeader) continue;
 
-      // Clean cell: strip the title prefix and category name if present
-      // Patterns:
-      //  "LISTA DE PRECIOS BYTE REPUESTOS, CONSULTAR STOCK SAMSUNG"
-      //  "LISTA DE PRECIOS (CONSULTAR STOCK)                         MARCOS SAMSUNG"
-      let brandName = rawCell.replace(/^LISTA DE PRECIOS.*?STOCK[)\s]+/i, "").trim();
-      // Strip category prefix (e.g. "MARCOS SAMSUNG" -> "SAMSUNG")
-      if (brandName.toUpperCase().startsWith(tabUpper + " ")) {
-        brandName = brandName.slice(tabUpper.length).trim();
-      }
+      const brandName = cleanBrand(rawCell, tabUpper);
       const upper = brandName.toUpperCase();
       if (!brandName) continue;
       if (upper === "PRECIO" || upper === "MODELO" || upper === "MAYORISTA" || upper === "PVP") continue;
       if (upper.startsWith("PRECIO ")) continue;
-      // Skip if still contains LISTA DE PRECIOS (no brand at end)
       if (upper.includes("LISTA DE PRECIOS")) continue;
 
+      // Price col always = modelCol + 1 (data rows have model then price)
       possibleBrands.push({ name: brandName, modelCol: i, priceCol: i + 1 });
+    }
+
+    // PASS 2: brand-only sub-headers (like CAMARAS row 66 with SAMSUNG, MOTOROLA, ...
+    // but no "PRECIO" label). Only fire if the row contains NO numeric cells.
+    if (possibleBrands.length === 0 && currentBrands.length > 0) {
+      const digitCellCount = row.filter((c) => /\d/.test(c?.trim() || "")).length;
+      if (digitCellCount === 0) {
+        const textCells: { name: string; col: number }[] = [];
+        for (let i = 0; i < row.length; i++) {
+          const rawCell = row[i]?.trim() || "";
+          if (!rawCell) continue;
+          const upper = rawCell.toUpperCase();
+          if (upper === "PRECIO" || upper === "MODELO" || upper === "MAYORISTA" || upper === "PVP") continue;
+          if (upper.startsWith("PRECIO ")) continue;
+          if (upper.includes("LISTA DE PRECIOS")) continue;
+          textCells.push({ name: cleanBrand(rawCell, tabUpper), col: i });
+        }
+        if (textCells.length >= 3) {
+          const knownCols = new Set(currentBrands.map((b) => b.modelCol));
+          const matchingExisting = textCells.filter((t) => knownCols.has(t.col)).length;
+          const spacings = textCells.slice(1).map((t, idx) => t.col - textCells[idx].col);
+          const consistentSpacing = spacings.length > 0 && spacings.every((s) => s === spacings[0] && (s === 3 || s === 4));
+          if (matchingExisting >= 2 || consistentSpacing) {
+            for (const tc of textCells) {
+              possibleBrands.push({ name: tc.name, modelCol: tc.col, priceCol: tc.col + 1 });
+            }
+          }
+        }
+      }
     }
 
     if (possibleBrands.length > 0) {
