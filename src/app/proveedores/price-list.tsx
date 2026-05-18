@@ -2,12 +2,9 @@
 
 import { useState } from "react";
 import { Search, ExternalLink, RefreshCw } from "lucide-react";
+import type { PriceItem } from "@/lib/actions/price-list";
 
-interface PriceListProps {
-  data: string[][];
-}
-
-export function PriceList({ data }: PriceListProps) {
+export function PriceList({ data }: { data: PriceItem[] }) {
   const [query, setQuery] = useState("");
 
   if (data.length === 0) {
@@ -18,28 +15,25 @@ export function PriceList({ data }: PriceListProps) {
     );
   }
 
-  // First rows are headers, find the header row (the one with "PRECIO" in it)
-  let headerIdx = 0;
-  for (let i = 0; i < Math.min(data.length, 10); i++) {
-    if (data[i].some((c) => c.toUpperCase().includes("PRECIO"))) {
-      headerIdx = i;
-      break;
-    }
-  }
-
-  const headers = data[headerIdx];
-  const rows = data.slice(headerIdx + 1);
-
-  // Filter rows by search query
   const filtered = query.trim()
-    ? rows.filter((row) =>
-        row.some((cell) => cell.toLowerCase().includes(query.toLowerCase()))
+    ? data.filter(
+        (item) =>
+          item.modelo.toLowerCase().includes(query.toLowerCase()) ||
+          item.marca.toLowerCase().includes(query.toLowerCase())
       )
-    : rows;
+    : data;
+
+  // Group by marca for display
+  const marcas = [...new Set(data.map((i) => i.marca))];
+  const [filterMarca, setFilterMarca] = useState("");
+
+  const shown = filterMarca
+    ? filtered.filter((i) => i.marca === filterMarca)
+    : filtered;
 
   return (
     <div className="mt-6 bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-surface-600 flex items-center justify-between gap-3">
+      <div className="px-5 py-3 border-b border-surface-600 flex flex-col md:flex-row md:items-center justify-between gap-2">
         <h2 className="text-sm font-semibold shrink-0">Lista de Precios — BYTE CBA</h2>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -64,32 +58,57 @@ export function PriceList({ data }: PriceListProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto" style={{ maxHeight: "500px", overflowY: "auto" }}>
+      {/* Brand filter pills */}
+      <div className="px-5 py-2 border-b border-surface-600 flex flex-wrap gap-1.5">
+        <button
+          onClick={() => setFilterMarca("")}
+          className={`px-2.5 py-1 rounded-full text-[0.65rem] font-medium transition-colors ${
+            !filterMarca
+              ? "bg-brand-teal/15 text-brand-teal border border-brand-teal/30"
+              : "bg-surface-700 text-gray-400 hover:bg-surface-600"
+          }`}
+        >
+          Todas
+        </button>
+        {marcas.map((m) => (
+          <button
+            key={m}
+            onClick={() => setFilterMarca(m === filterMarca ? "" : m)}
+            className={`px-2.5 py-1 rounded-full text-[0.65rem] font-medium transition-colors ${
+              filterMarca === m
+                ? "bg-brand-teal/15 text-brand-teal border border-brand-teal/30"
+                : "bg-surface-700 text-gray-400 hover:bg-surface-600"
+            }`}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto" style={{ maxHeight: "450px", overflowY: "auto" }}>
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-surface-800 z-10">
             <tr className="border-b border-surface-600 text-gray-400 text-xs uppercase tracking-wider">
-              {headers.map((h, i) => (
-                <th key={i} className="px-4 py-2.5 text-left font-medium whitespace-nowrap">
-                  {h}
-                </th>
-              ))}
+              <th className="px-4 py-2.5 text-left font-medium">Marca</th>
+              <th className="px-4 py-2.5 text-left font-medium">Modelo</th>
+              <th className="px-4 py-2.5 text-right font-medium">Precio</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-700">
-            {filtered.length === 0 ? (
+            {shown.length === 0 ? (
               <tr>
-                <td colSpan={headers.length} className="px-4 py-8 text-center text-gray-500 text-sm">
-                  No se encontraron resultados para &quot;{query}&quot;
+                <td colSpan={3} className="px-4 py-8 text-center text-gray-500 text-sm">
+                  Sin resultados{query ? ` para "${query}"` : ""}
                 </td>
               </tr>
             ) : (
-              filtered.map((row, ri) => (
-                <tr key={ri} className="card-hover">
-                  {headers.map((_, ci) => (
-                    <td key={ci} className="px-4 py-2 whitespace-nowrap">
-                      {row[ci] || ""}
-                    </td>
-                  ))}
+              shown.map((item, i) => (
+                <tr key={i} className="card-hover">
+                  <td className="px-4 py-2 text-gray-400 text-xs">{item.marca}</td>
+                  <td className="px-4 py-2">{item.modelo}</td>
+                  <td className="px-4 py-2 text-right text-green-400 font-medium">
+                    {item.precio ? `$${item.precio}` : "-"}
+                  </td>
                 </tr>
               ))
             )}
@@ -99,7 +118,7 @@ export function PriceList({ data }: PriceListProps) {
 
       <div className="px-5 py-2 border-t border-surface-600 text-[0.65rem] text-gray-600 flex items-center gap-1.5">
         <RefreshCw className="w-3 h-3" />
-        Se actualiza cada 5 minutos desde Google Sheets · {filtered.length} de {rows.length} productos
+        Se actualiza cada 5 min · {shown.length} de {data.length} productos
       </div>
     </div>
   );
