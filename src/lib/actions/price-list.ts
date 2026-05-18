@@ -66,7 +66,7 @@ function extractProducts(rows: string[][], categoria: string): PriceItem[] {
 
       // Clean cell: if it contains the merged title prefix, strip it
       // Pattern: "LISTA DE PRECIOS BYTE REPUESTOS, CONSULTAR STOCK <BRAND>"
-      let brandName = rawCell.replace(/^LISTA DE PRECIOS[^a-z]*?STOCK\s+/i, "").trim();
+      let brandName = rawCell.replace(/^LISTA DE PRECIOS[\s\S]*?STOCK\s+/i, "").trim();
       const upper = brandName.toUpperCase();
       if (!brandName || upper === "PRECIO" || upper === "MODELO") continue;
       // Skip if still contains LISTA DE PRECIOS (no brand at end)
