@@ -6,6 +6,9 @@ import type { PriceItem } from "@/lib/actions/price-list";
 
 export function PriceList({ data }: { data: PriceItem[] }) {
   const [query, setQuery] = useState("");
+  const [filterMarca, setFilterMarca] = useState("");
+
+  const marcas = [...new Set(data.map((i) => i.marca))];
 
   if (data.length === 0) {
     return (
@@ -22,10 +25,6 @@ export function PriceList({ data }: { data: PriceItem[] }) {
           item.marca.toLowerCase().includes(query.toLowerCase())
       )
     : data;
-
-  // Group by marca for display
-  const marcas = [...new Set(data.map((i) => i.marca))];
-  const [filterMarca, setFilterMarca] = useState("");
 
   const shown = filterMarca
     ? filtered.filter((i) => i.marca === filterMarca)
@@ -58,7 +57,6 @@ export function PriceList({ data }: { data: PriceItem[] }) {
         </div>
       </div>
 
-      {/* Brand filter pills */}
       <div className="px-5 py-2 border-b border-surface-600 flex flex-wrap gap-1.5">
         <button
           onClick={() => setFilterMarca("")}
