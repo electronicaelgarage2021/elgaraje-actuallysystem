@@ -1,43 +1,70 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Eye, X } from "lucide-react";
-import Link from "next/link";
-import { getEstadoConfig } from "@/lib/constants";
-import { getDaySummary } from "@/lib/actions/calendar";
-import type { EstadoOrden } from "@/lib/types";
+import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { getDaySummary, getMonthActivity } from "@/lib/actions/calendar";
+import type { MonthActivity } from "@/lib/actions/calendar";
 
-interface Entrega {
-  id: string;
-  numero: number;
-  dispositivo: string;
-  clienteNombre: string;
-  fecha: string;
-  estado: EstadoOrden;
-}
-
-const DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const DIAS = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
 const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-export function CalendarView({ entregas }: { entregas: Entrega[] }) {
+const ACTIVITY_DOTS: {
+  key: "ingresados" | "entregados" | "cobros" | "ventas" | "repuestos";
+  color: string;
+  label: string;
+  emoji?: string;
+}[] = [
+  { key: "ingresados", color: "bg-blue-400", label: "Ingresados" },
+  { key: "entregados", color: "bg-green-400", label: "Entregados" },
+  { key: "cobros", color: "bg-brand-teal", label: "Cobros", emoji: "💵" },
+  { key: "ventas", color: "bg-amber-400", label: "Ventas" },
+  { key: "repuestos", color: "bg-orange-400", label: "Repuestos" },
+];
+
+interface CalendarViewProps {
+  initialActivity: MonthActivity;
+  initialYear: number;
+  initialMonth: number; // 0-indexed (JS Date month)
+}
+
+export function CalendarView({
+  initialActivity,
+  initialYear,
+  initialMonth,
+}: CalendarViewProps) {
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
+  const [year, setYear] = useState(initialYear);
+  const [month, setMonth] = useState(initialMonth);
+  const [activity, setActivity] = useState<MonthActivity>(initialActivity);
+  const [loadingMonth, setLoadingMonth] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [daySummary, setDaySummary] = useState<any>(null);
   const [loadingDay, setLoadingDay] = useState(false);
 
+  const fetchActivity = useCallback(async (y: number, m: number) => {
+    setLoadingMonth(true);
+    const data = await getMonthActivity(y, m + 1); // server action expects 1-indexed month
+    setActivity(data);
+    setLoadingMonth(false);
+  }, []);
+
   function prevMonth() {
-    if (month === 0) { setMonth(11); setYear(year - 1); }
-    else setMonth(month - 1);
+    const newMonth = month === 0 ? 11 : month - 1;
+    const newYear = month === 0 ? year - 1 : year;
+    setMonth(newMonth);
+    setYear(newYear);
+    fetchActivity(newYear, newMonth);
   }
 
   function nextMonth() {
-    if (month === 11) { setMonth(0); setYear(year + 1); }
-    else setMonth(month + 1);
+    const newMonth = month === 11 ? 0 : month + 1;
+    const newYear = month === 11 ? year + 1 : year;
+    setMonth(newMonth);
+    setYear(newYear);
+    fetchActivity(newYear, newMonth);
   }
 
   async function openDayModal(fecha: string) {
@@ -53,13 +80,6 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
   const startOffset = (firstDay.getDay() + 6) % 7;
   const daysInMonth = lastDay.getDate();
 
-  const entregasByDate: Record<string, Entrega[]> = {};
-  for (const e of entregas) {
-    const d = e.fecha;
-    if (!entregasByDate[d]) entregasByDate[d] = [];
-    entregasByDate[d].push(e);
-  }
-
   const today = now.toISOString().split("T")[0];
 
   const cells: (number | null)[] = [];
@@ -69,69 +89,95 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
 
   return (
     <div>
+      {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="p-2 rounded-lg bg-surface-700 hover:bg-surface-600 text-gray-400 transition-colors">
+        <button
+          onClick={prevMonth}
+          className="p-2 rounded-lg bg-surface-700 hover:bg-surface-600 text-gray-400 transition-colors"
+        >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <h2 className="text-lg font-semibold">{MESES[month]} {year}</h2>
-        <button onClick={nextMonth} className="p-2 rounded-lg bg-surface-700 hover:bg-surface-600 text-gray-400 transition-colors">
+        <h2 className="text-lg font-semibold">
+          {MESES[month]} {year}
+          {loadingMonth && (
+            <span className="ml-2 inline-block w-3 h-3 border-2 border-brand-teal border-t-transparent rounded-full animate-spin align-middle" />
+          )}
+        </h2>
+        <button
+          onClick={nextMonth}
+          className="p-2 rounded-lg bg-surface-700 hover:bg-surface-600 text-gray-400 transition-colors"
+        >
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
+      {/* Calendar grid */}
       <div className="bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
+        {/* Day headers */}
         <div className="grid grid-cols-7">
           {DIAS.map((d) => (
-            <div key={d} className="px-2 py-2 text-center text-[0.65rem] font-semibold text-gray-500 border-b border-surface-600">
+            <div
+              key={d}
+              className="px-2 py-2 text-center text-[0.65rem] font-semibold text-gray-500 border-b border-surface-600"
+            >
               {d}
             </div>
           ))}
         </div>
 
+        {/* Day cells */}
         <div className="grid grid-cols-7">
           {cells.map((day, i) => {
             if (day === null) {
-              return <div key={`empty-${i}`} className="min-h-[80px] border-b border-r border-surface-700 bg-surface-800/50" />;
+              return (
+                <div
+                  key={`empty-${i}`}
+                  className="min-h-[80px] border-b border-r border-surface-700 bg-surface-800/50"
+                />
+              );
             }
 
             const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const dayEntregas = entregasByDate[dateStr] || [];
+            const dayActivity = activity[dateStr];
             const isToday = dateStr === today;
+
+            const activeDots = ACTIVITY_DOTS.filter(
+              (dot) => dayActivity?.[dot.key]
+            );
 
             return (
               <div
                 key={dateStr}
-                className={`relative group min-h-[80px] border-b border-r border-surface-700 p-1.5 ${
+                className={`relative min-h-[80px] border-b border-r border-surface-700 p-1.5 flex flex-col ${
                   isToday ? "bg-brand-teal/5" : ""
                 }`}
               >
-                <button
-                  onClick={() => openDayModal(dateStr)}
-                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-surface-600 hover:bg-brand-teal/20 hover:text-brand-teal flex items-center justify-center text-gray-500 transition-all opacity-0 group-hover:opacity-100"
+                {/* Day number */}
+                <div
+                  className={`text-xs mb-1 ${
+                    isToday ? "text-brand-teal font-bold" : "text-gray-500"
+                  }`}
                 >
-                  <Eye className="w-3 h-3" />
-                </button>
-                <div className={`text-xs mb-1 ${isToday ? "text-brand-teal font-bold" : "text-gray-500"}`}>
                   {day}
                 </div>
-                <div className="space-y-0.5">
-                  {dayEntregas.slice(0, 3).map((e) => {
-                    const config = getEstadoConfig(e.estado);
-                    return (
-                      <Link
-                        key={e.id}
-                        href={`/ordenes/${e.id}`}
-                        className={`block px-1.5 py-0.5 rounded text-[0.6rem] truncate ${config.bgColor} hover:opacity-80 transition-opacity`}
-                      >
-                        #{e.numero} {e.dispositivo}
-                      </Link>
-                    );
-                  })}
-                  {dayEntregas.length > 3 && (
-                    <div className="text-[0.55rem] text-gray-500 pl-1">
-                      +{dayEntregas.length - 3} más
-                    </div>
-                  )}
+
+                {/* Activity button */}
+                <div className="flex-1 flex items-center justify-center px-0.5 pb-0.5">
+                  <button
+                    onClick={() => openDayModal(dateStr)}
+                    className={`w-full h-8 rounded-lg border flex items-center justify-center gap-1 transition-all ${
+                      isToday
+                        ? "bg-surface-700 border-brand-teal/30 hover:border-brand-teal/60"
+                        : "bg-surface-700 border-surface-600 hover:border-surface-500"
+                    } hover:bg-surface-600`}
+                  >
+                    {activeDots.map((dot) => (
+                      <span
+                        key={dot.key}
+                        className={`w-2 h-2 rounded-full ${dot.color}`}
+                      />
+                    ))}
+                  </button>
                 </div>
               </div>
             );
@@ -139,24 +185,53 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
         </div>
       </div>
 
+      {/* Legend */}
+      <div className="flex flex-wrap gap-4 justify-center mt-4">
+        {ACTIVITY_DOTS.map((dot) => (
+          <div key={dot.key} className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${dot.color}`} />
+            <span className="text-xs text-gray-400">
+              {dot.emoji ? `${dot.emoji} ` : ""}
+              {dot.label}
+            </span>
+          </div>
+        ))}
+      </div>
+
       {/* Day Summary Modal */}
       {selectedDate && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setSelectedDate(null); setDaySummary(null); }} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => {
+              setSelectedDate(null);
+              setDaySummary(null);
+            }}
+          />
           <div className="relative bg-surface-800 border border-surface-600 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl animate-in">
             {/* Header */}
             <div className="sticky top-0 bg-surface-800 border-b border-surface-600 px-5 py-4 flex items-center justify-between rounded-t-2xl">
               <div>
                 <h3 className="font-bold text-lg">
-                  {new Date(selectedDate + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+                  {new Date(selectedDate + "T12:00:00").toLocaleDateString(
+                    "es-AR",
+                    { weekday: "long", day: "numeric", month: "long" }
+                  )}
                 </h3>
                 {daySummary && !loadingDay && (
                   <p className="text-sm text-brand-teal font-semibold mt-0.5">
-                    Caja del día: ${daySummary.totalCaja.toLocaleString("es-AR")}
+                    Caja del dia: $
+                    {daySummary.totalCaja.toLocaleString("es-AR")}
                   </p>
                 )}
               </div>
-              <button onClick={() => { setSelectedDate(null); setDaySummary(null); }} className="p-2 rounded-lg hover:bg-surface-700 text-gray-400 hover:text-white transition-colors">
+              <button
+                onClick={() => {
+                  setSelectedDate(null);
+                  setDaySummary(null);
+                }}
+                className="p-2 rounded-lg hover:bg-surface-700 text-gray-400 hover:text-white transition-colors"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -176,9 +251,21 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
                     </h4>
                     <div className="space-y-1.5">
                       {daySummary.ingresadas.map((o: any) => (
-                        <div key={o.id} className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between">
-                          <span>#{o.numero} {o.dispositivo} <span className="text-gray-500">- {o.cliente?.nombre}</span></span>
-                          {o.presupuesto && <span className="text-brand-teal font-medium">${Number(o.presupuesto).toLocaleString("es-AR")}</span>}
+                        <div
+                          key={o.id}
+                          className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between"
+                        >
+                          <span>
+                            #{o.numero} {o.dispositivo}{" "}
+                            <span className="text-gray-500">
+                              - {o.cliente?.nombre}
+                            </span>
+                          </span>
+                          {o.presupuesto && (
+                            <span className="text-brand-teal font-medium">
+                              ${Number(o.presupuesto).toLocaleString("es-AR")}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -194,9 +281,21 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
                     </h4>
                     <div className="space-y-1.5">
                       {daySummary.entregadas.map((o: any) => (
-                        <div key={o.id} className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between">
-                          <span>#{o.numero} {o.dispositivo} <span className="text-gray-500">- {o.cliente?.nombre}</span></span>
-                          {o.presupuesto && <span className="text-green-400 font-medium">${Number(o.presupuesto).toLocaleString("es-AR")}</span>}
+                        <div
+                          key={o.id}
+                          className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between"
+                        >
+                          <span>
+                            #{o.numero} {o.dispositivo}{" "}
+                            <span className="text-gray-500">
+                              - {o.cliente?.nombre}
+                            </span>
+                          </span>
+                          {o.presupuesto && (
+                            <span className="text-green-400 font-medium">
+                              ${Number(o.presupuesto).toLocaleString("es-AR")}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -208,13 +307,25 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
                   <div>
                     <h4 className="text-xs font-semibold text-brand-teal mb-2 flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-brand-teal" />
-                      Cobros ({daySummary.pagos.length}) — ${daySummary.totalPagos.toLocaleString("es-AR")}
+                      Cobros ({daySummary.pagos.length}) — $
+                      {daySummary.totalPagos.toLocaleString("es-AR")}
                     </h4>
                     <div className="space-y-1.5">
                       {daySummary.pagos.map((p: any) => (
-                        <div key={p.id} className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between">
-                          <span>{p.tipo === "sena" ? "Seña" : "Pago"} #{p.orden?.numero} {p.orden?.dispositivo} <span className="text-gray-500 capitalize">({p.metodo})</span></span>
-                          <span className="text-brand-teal font-medium">${Number(p.monto).toLocaleString("es-AR")}</span>
+                        <div
+                          key={p.id}
+                          className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between"
+                        >
+                          <span>
+                            {p.tipo === "sena" ? "Sena" : "Pago"} #
+                            {p.orden?.numero} {p.orden?.dispositivo}{" "}
+                            <span className="text-gray-500 capitalize">
+                              ({p.metodo})
+                            </span>
+                          </span>
+                          <span className="text-brand-teal font-medium">
+                            ${Number(p.monto).toLocaleString("es-AR")}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -224,15 +335,26 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
                 {/* Ventas */}
                 {daySummary.ventas.length > 0 && (
                   <div>
-                    <h4 className="text-xs font-semibold text-purple-400 mb-2 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-purple-400" />
-                      Ventas de productos ({daySummary.ventas.length}) — ${daySummary.totalVentas.toLocaleString("es-AR")}
+                    <h4 className="text-xs font-semibold text-amber-400 mb-2 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      Ventas de productos ({daySummary.ventas.length}) — $
+                      {daySummary.totalVentas.toLocaleString("es-AR")}
                     </h4>
                     <div className="space-y-1.5">
                       {daySummary.ventas.map((v: any) => (
-                        <div key={v.id} className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between">
-                          <span>{v.producto} <span className="text-gray-500 capitalize">({v.metodo})</span></span>
-                          <span className="text-purple-400 font-medium">${Number(v.monto).toLocaleString("es-AR")}</span>
+                        <div
+                          key={v.id}
+                          className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between"
+                        >
+                          <span>
+                            {v.producto}{" "}
+                            <span className="text-gray-500 capitalize">
+                              ({v.metodo})
+                            </span>
+                          </span>
+                          <span className="text-amber-400 font-medium">
+                            ${Number(v.monto).toLocaleString("es-AR")}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -248,9 +370,25 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
                     </h4>
                     <div className="space-y-1.5">
                       {daySummary.repuestos.map((r: any) => (
-                        <div key={r.id} className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between">
-                          <span>{r.nombre} {r.orden && <span className="text-gray-500">— #{r.orden.numero} {r.orden.dispositivo}</span>}</span>
-                          <span className="text-xs text-gray-500 capitalize">{r.proveedor === "cordoba" ? "Córdoba" : r.proveedor === "vcp" ? "VCP" : "Sin asignar"}</span>
+                        <div
+                          key={r.id}
+                          className="bg-surface-700/50 rounded-lg px-3 py-2 text-sm flex justify-between"
+                        >
+                          <span>
+                            {r.nombre}{" "}
+                            {r.orden && (
+                              <span className="text-gray-500">
+                                — #{r.orden.numero} {r.orden.dispositivo}
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-xs text-gray-500 capitalize">
+                            {r.proveedor === "cordoba"
+                              ? "Cordoba"
+                              : r.proveedor === "vcp"
+                                ? "VCP"
+                                : "Sin asignar"}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -258,11 +396,15 @@ export function CalendarView({ entregas }: { entregas: Entrega[] }) {
                 )}
 
                 {/* Empty state */}
-                {daySummary.ingresadas.length === 0 && daySummary.entregadas.length === 0 && daySummary.pagos.length === 0 && daySummary.ventas.length === 0 && daySummary.repuestos.length === 0 && (
-                  <div className="text-center py-8 text-gray-500 text-sm">
-                    No hay actividad registrada este día
-                  </div>
-                )}
+                {daySummary.ingresadas.length === 0 &&
+                  daySummary.entregadas.length === 0 &&
+                  daySummary.pagos.length === 0 &&
+                  daySummary.ventas.length === 0 &&
+                  daySummary.repuestos.length === 0 && (
+                    <div className="text-center py-8 text-gray-500 text-sm">
+                      No hay actividad registrada este dia
+                    </div>
+                  )}
               </div>
             ) : null}
           </div>
