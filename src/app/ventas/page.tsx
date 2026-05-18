@@ -47,7 +47,7 @@ function formatDateRange(desde: string, hasta: string): string {
 export default async function VentasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fecha?: string; desde?: string; hasta?: string }>;
+  searchParams: Promise<{ fecha?: string; desde?: string; hasta?: string; periodo?: string }>;
 }) {
   const params = await searchParams;
 
@@ -75,7 +75,7 @@ export default async function VentasPage({
           </h1>
           <p className="text-gray-400 text-sm mt-1 capitalize">{fechaDisplay}</p>
         </div>
-        <VentasRangePicker desde={desde} hasta={hasta} />
+        <VentasRangePicker desde={desde} hasta={hasta} periodo={params.periodo} />
       </div>
 
       {/* Summary cards */}

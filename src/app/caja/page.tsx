@@ -53,7 +53,7 @@ function formatDateRange(desde: string, hasta: string): string {
 export default async function CajaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fecha?: string; desde?: string; hasta?: string }>;
+  searchParams: Promise<{ fecha?: string; desde?: string; hasta?: string; periodo?: string }>;
 }) {
   const params = await searchParams;
 
@@ -93,7 +93,7 @@ export default async function CajaPage({
           <h1 className="text-2xl font-bold">Caja Diaria</h1>
           <p className="text-gray-400 text-sm mt-1 capitalize">{fechaDisplay}</p>
         </div>
-        <CajaDatePicker desde={desde} hasta={hasta} />
+        <CajaDatePicker desde={desde} hasta={hasta} periodo={params.periodo} />
       </div>
 
       {/* Summary cards */}

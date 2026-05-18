@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Calendar } from "lucide-react";
 
@@ -9,6 +8,7 @@ type RangeKey = "hoy" | "esta_semana" | "ultima_semana" | "ultimos_10" | "ultimo
 interface CajaDatePickerProps {
   desde: string;
   hasta: string;
+  periodo?: string;
 }
 
 function getToday(): string {
@@ -21,7 +21,7 @@ function toDateStr(d: Date): string {
 
 function getMondayOfWeek(d: Date): Date {
   const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // Monday = 1
+  const diff = day === 0 ? -6 : 1 - day;
   const monday = new Date(d);
   monday.setDate(d.getDate() + diff);
   return monday;
@@ -48,7 +48,7 @@ function getRangeForKey(key: RangeKey): { desde: string; hasta: string } | null 
     }
     case "ultimos_10": {
       const tenAgo = new Date(today);
-      tenAgo.setDate(today.getDate() - 9); // 10 days inclusive
+      tenAgo.setDate(today.getDate() - 9);
       return { desde: toDateStr(tenAgo), hasta: toDateStr(today) };
     }
     case "ultimo_mes": {
@@ -60,7 +60,10 @@ function getRangeForKey(key: RangeKey): { desde: string; hasta: string } | null 
   }
 }
 
-function detectActiveKey(desde: string, hasta: string): RangeKey {
+function detectActiveKey(desde: string, hasta: string, periodo?: string): RangeKey {
+  if (periodo && ["hoy", "esta_semana", "ultima_semana", "ultimos_10", "ultimo_mes"].includes(periodo)) {
+    return periodo as RangeKey;
+  }
   const keys: RangeKey[] = ["hoy", "esta_semana", "ultima_semana", "ultimos_10", "ultimo_mes"];
   for (const key of keys) {
     const range = getRangeForKey(key);
@@ -78,15 +81,16 @@ const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "personalizado", label: "Personalizado" },
 ];
 
-export function CajaDatePicker({ desde, hasta }: CajaDatePickerProps) {
-  const router = useRouter();
-  const activeKey = detectActiveKey(desde, hasta);
+export function CajaDatePicker({ desde, hasta, periodo }: CajaDatePickerProps) {
+  const activeKey = detectActiveKey(desde, hasta, periodo);
   const [showCustom, setShowCustom] = useState(activeKey === "personalizado");
   const [customDesde, setCustomDesde] = useState(desde);
   const [customHasta, setCustomHasta] = useState(hasta);
 
-  function navigateRange(d: string, h: string) {
-    window.location.href = `/caja?desde=${d}&hasta=${h}`;
+  function navigateRange(d: string, h: string, p?: string) {
+    const params = new URLSearchParams({ desde: d, hasta: h });
+    if (p) params.set("periodo", p);
+    window.location.href = `/caja?${params}`;
   }
 
   function handleQuickSelect(key: RangeKey) {
@@ -96,12 +100,11 @@ export function CajaDatePicker({ desde, hasta }: CajaDatePickerProps) {
     }
     setShowCustom(false);
     const range = getRangeForKey(key);
-    if (range) navigateRange(range.desde, range.hasta);
+    if (range) navigateRange(range.desde, range.hasta, key);
   }
 
   function handleCustomApply() {
     if (customDesde && customHasta) {
-      // Ensure desde <= hasta
       const d = customDesde <= customHasta ? customDesde : customHasta;
       const h = customDesde <= customHasta ? customHasta : customDesde;
       navigateRange(d, h);

@@ -7,6 +7,7 @@ import { Calendar } from "lucide-react";
 type RangeKey = "hoy" | "esta_semana" | "ultima_semana" | "ultimos_10" | "ultimo_mes" | "personalizado";
 
 interface VentasRangePickerProps {
+  periodo?: string;
   desde: string;
   hasta: string;
 }
@@ -60,7 +61,10 @@ function getRangeForKey(key: RangeKey): { desde: string; hasta: string } | null 
   }
 }
 
-function detectActiveKey(desde: string, hasta: string): RangeKey {
+function detectActiveKey(desde: string, hasta: string, periodo?: string): RangeKey {
+  if (periodo && ["hoy", "esta_semana", "ultima_semana", "ultimos_10", "ultimo_mes"].includes(periodo)) {
+    return periodo as RangeKey;
+  }
   const keys: RangeKey[] = ["hoy", "esta_semana", "ultima_semana", "ultimos_10", "ultimo_mes"];
   for (const key of keys) {
     const range = getRangeForKey(key);
@@ -78,15 +82,16 @@ const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "personalizado", label: "Personalizado" },
 ];
 
-export function VentasRangePicker({ desde, hasta }: VentasRangePickerProps) {
-  const router = useRouter();
-  const activeKey = detectActiveKey(desde, hasta);
+export function VentasRangePicker({ desde, hasta, periodo }: VentasRangePickerProps) {
+  const activeKey = detectActiveKey(desde, hasta, periodo);
   const [showCustom, setShowCustom] = useState(activeKey === "personalizado");
   const [customDesde, setCustomDesde] = useState(desde);
   const [customHasta, setCustomHasta] = useState(hasta);
 
-  function navigateRange(d: string, h: string) {
-    window.location.href = `/ventas?desde=${d}&hasta=${h}`;
+  function navigateRange(d: string, h: string, p?: string) {
+    const params = new URLSearchParams({ desde: d, hasta: h });
+    if (p) params.set("periodo", p);
+    window.location.href = `/ventas?${params}`;
   }
 
   function handleQuickSelect(key: RangeKey) {
@@ -96,7 +101,7 @@ export function VentasRangePicker({ desde, hasta }: VentasRangePickerProps) {
     }
     setShowCustom(false);
     const range = getRangeForKey(key);
-    if (range) navigateRange(range.desde, range.hasta);
+    if (range) navigateRange(range.desde, range.hasta, key);
   }
 
   function handleCustomApply() {
