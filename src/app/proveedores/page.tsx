@@ -23,6 +23,26 @@ export default async function ProveedoresPage() {
         initialCordoba={cordoba}
         initialVcp={vcp}
       />
+
+      {/* Lista de precios */}
+      <div className="mt-6 bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-surface-600 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Lista de Precios — BYTE CBA</h2>
+          <a
+            href="https://docs.google.com/spreadsheets/d/1lSdnSLsJHQ4bjLFC2GtaI_G85fjogyti9JzL0QT_0qc/edit?gid=222576120#gid=222576120"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-brand-teal hover:underline"
+          >
+            Abrir en Google Sheets
+          </a>
+        </div>
+        <iframe
+          src="https://docs.google.com/spreadsheets/d/1lSdnSLsJHQ4bjLFC2GtaI_G85fjogyti9JzL0QT_0qc/preview?gid=222576120"
+          className="w-full border-0"
+          style={{ height: "500px" }}
+        />
+      </div>
     </div>
   );
 }
