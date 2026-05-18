@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { METODOS_PAGO } from "@/lib/constants";
 import { createOrder } from "@/lib/actions/orders";
 import { searchClients } from "@/lib/actions/clients";
+import { DeviceHistoryHint } from "@/components/device-history-hint";
 import {
   X,
   DollarSign,
@@ -14,9 +15,7 @@ import {
   User,
   Smartphone,
   Wrench,
-  Camera,
   Info,
-  Upload,
 } from "lucide-react";
 import type { Cliente } from "@/lib/types";
 import { format } from "date-fns";
@@ -46,6 +45,8 @@ export default function NuevaOrden() {
   const [senaValue, setSenaValue] = useState("");
   const [presupuesto, setPresupuesto] = useState("");
   const [tiposSeleccionados, setTiposSeleccionados] = useState<string[]>([]);
+  const [dispositivo, setDispositivo] = useState("");
+  const [prioridad, setPrioridad] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const fechaHoy = format(new Date(), "dd/MM/yyyy", { locale: es });
@@ -85,6 +86,7 @@ export default function NuevaOrden() {
       if (conSena && senaValue) {
         fd.set("sena", String(senaFinal));
       }
+      fd.set("prioridad", String(prioridad));
       await createOrder(fd);
       router.push("/ordenes");
     } catch (err: unknown) {
@@ -261,9 +263,12 @@ export default function NuevaOrden() {
               <input
                 name="dispositivo"
                 required
+                value={dispositivo}
+                onChange={(e) => setDispositivo(e.target.value)}
                 placeholder="Ej: Samsung A54, Moto G24, iPhone 11"
                 className="w-full bg-surface-700 border border-surface-600 rounded-lg px-3 py-2.5 text-sm placeholder-gray-500"
               />
+              <DeviceHistoryHint dispositivo={dispositivo} />
             </div>
           </div>
         </div>
@@ -306,27 +311,31 @@ export default function NuevaOrden() {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">Presupuesto estimado</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
-                  <input
-                    name="presupuesto"
-                    type="number"
-                    placeholder="15000"
-                    value={presupuesto}
-                    onChange={(e) => setPresupuesto(e.target.value)}
-                    className="w-full bg-surface-700 border border-surface-600 rounded-lg pl-7 pr-3 py-2.5 text-sm placeholder-gray-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">Fecha estimada de entrega</label>
+            <div>
+              <button
+                type="button"
+                onClick={() => setPrioridad(!prioridad)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  prioridad
+                    ? "bg-brand-red text-white"
+                    : "bg-surface-700 text-gray-400 border border-surface-600"
+                }`}
+              >
+                {prioridad ? "⚡ Prioridad alta" : "Prioridad"}
+              </button>
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Presupuesto estimado</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
                 <input
-                  name="fecha_entrega_estimada"
-                  type="date"
-                  className="w-full bg-surface-700 border border-surface-600 rounded-lg px-3 py-2.5 text-sm text-gray-300"
+                  name="presupuesto"
+                  type="number"
+                  placeholder="15000"
+                  value={presupuesto}
+                  onChange={(e) => setPresupuesto(e.target.value)}
+                  className="w-full bg-surface-700 border border-surface-600 rounded-lg pl-7 pr-3 py-2.5 text-sm placeholder-gray-500"
                 />
               </div>
             </div>
@@ -338,6 +347,15 @@ export default function NuevaOrden() {
                 rows={2}
                 placeholder="Notas que solo vos ves..."
                 className="w-full bg-surface-700 border border-surface-600 rounded-lg px-3 py-2.5 text-sm placeholder-gray-500 resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Repuesto necesario (opcional)</label>
+              <input
+                name="repuesto"
+                placeholder="Ej: Pin de carga Samsung A54"
+                className="w-full bg-surface-700 border border-surface-600 rounded-lg px-3 py-2.5 text-sm placeholder-gray-500"
               />
             </div>
           </div>
@@ -428,18 +446,6 @@ export default function NuevaOrden() {
                 )}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Photo upload */}
-        <div className="bg-surface-800 border border-surface-600 rounded-xl p-5">
-          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
-            <Camera className="w-4 h-4 text-brand-teal" />
-            Foto del equipo (opcional)
-          </h2>
-          <div className="border-2 border-dashed border-surface-600 rounded-lg p-8 text-center hover:border-brand-teal/30 transition-colors cursor-pointer">
-            <Upload className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">Tocá para sacar foto o subir imagen</p>
           </div>
         </div>
 

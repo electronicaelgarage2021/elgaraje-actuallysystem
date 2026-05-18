@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { getOrder, updateOrder } from "@/lib/actions/orders";
-import { ChevronLeft, Smartphone, Wrench, DollarSign, Calendar } from "lucide-react";
+import { ChevronLeft, Smartphone, Wrench, DollarSign } from "lucide-react";
 import Link from "next/link";
 
 export default function EditarOrden() {
@@ -17,7 +17,6 @@ export default function EditarOrden() {
   const [problema, setProblema] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [presupuesto, setPresupuesto] = useState("");
-  const [fechaEntrega, setFechaEntrega] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -26,7 +25,6 @@ export default function EditarOrden() {
       setProblema(orden.problema || "");
       setObservaciones(orden.observaciones || "");
       setPresupuesto(orden.presupuesto ? String(orden.presupuesto) : "");
-      setFechaEntrega(orden.fecha_entrega_estimada || "");
       setFetching(false);
     }
     load();
@@ -40,7 +38,6 @@ export default function EditarOrden() {
     fd.set("problema", problema);
     fd.set("observaciones", observaciones);
     fd.set("presupuesto", presupuesto);
-    fd.set("fecha_entrega_estimada", fechaEntrega);
     await updateOrder(id, fd);
     router.push(`/ordenes/${id}`);
   }
@@ -123,30 +120,16 @@ export default function EditarOrden() {
             <DollarSign className="w-4 h-4 text-brand-teal" />
             Presupuesto
           </h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Presupuesto estimado</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
-                <input
-                  type="number"
-                  value={presupuesto}
-                  onChange={(e) => setPresupuesto(e.target.value)}
-                  placeholder="15000"
-                  className="w-full bg-surface-700 border border-surface-600 rounded-lg pl-7 pr-3 py-2.5 text-sm placeholder-gray-500"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                Fecha estimada de entrega
-              </label>
+          <div>
+            <label className="text-xs text-gray-400 mb-1 block">Presupuesto estimado</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
               <input
-                type="date"
-                value={fechaEntrega}
-                onChange={(e) => setFechaEntrega(e.target.value)}
-                className="w-full bg-surface-700 border border-surface-600 rounded-lg px-3 py-2.5 text-sm text-gray-300"
+                type="number"
+                value={presupuesto}
+                onChange={(e) => setPresupuesto(e.target.value)}
+                placeholder="15000"
+                className="w-full bg-surface-700 border border-surface-600 rounded-lg pl-7 pr-3 py-2.5 text-sm placeholder-gray-500"
               />
             </div>
           </div>

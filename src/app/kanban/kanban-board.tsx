@@ -14,6 +14,7 @@ interface KanbanOrden {
   problema: string;
   estado: EstadoOrden;
   presupuesto: number | null;
+  prioridad: boolean;
   fecha_ingreso: string;
   cliente: {
     id: string;
@@ -130,7 +131,7 @@ export function KanbanBoard({ initialColumnas }: { initialColumnas: KanbanColumn
             </div>
 
             <div className="p-2 space-y-2 min-h-[120px]">
-              {col.ordenes.map((orden) => {
+              {[...col.ordenes].sort((a, b) => (b.prioridad ? 1 : 0) - (a.prioridad ? 1 : 0)).map((orden) => {
                 const dias = getDiasEnTaller(orden.fecha_ingreso);
                 const isDragging = draggedId === orden.id;
 
@@ -140,20 +141,27 @@ export function KanbanBoard({ initialColumnas }: { initialColumnas: KanbanColumn
                     draggable
                     onDragStart={() => handleDragStart(orden.id)}
                     onDragEnd={() => { setDraggedId(null); setDragOverCol(null); }}
-                    className={`bg-surface-800 border border-surface-600 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all hover:border-surface-500 ${
+                    className={`bg-surface-800 border rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all hover:border-surface-500 ${
                       isDragging ? "opacity-40 scale-95" : ""
-                    }`}
+                    } ${orden.prioridad ? "border-brand-red/50 ring-1 ring-brand-red/20" : "border-surface-600"}`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <GripVertical className="w-3.5 h-3.5 text-gray-600 shrink-0" />
                         <span className="text-[0.65rem] text-gray-500 font-mono">#{orden.numero}</span>
                       </div>
-                      {dias > 90 && (
-                        <span className="text-[0.6rem] bg-brand-red/15 text-brand-red px-1.5 py-0.5 rounded font-medium shrink-0">
-                          {dias}d
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {orden.prioridad && (
+                          <span className="text-[0.6rem] bg-brand-red/15 text-brand-red px-1.5 py-0.5 rounded font-medium">
+                            ⚡
+                          </span>
+                        )}
+                        {dias > 90 && (
+                          <span className="text-[0.6rem] bg-brand-red/15 text-brand-red px-1.5 py-0.5 rounded font-medium">
+                            {dias}d
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-sm font-medium truncate">{orden.dispositivo}</p>

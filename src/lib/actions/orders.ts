@@ -96,8 +96,7 @@ export async function createOrder(formData: FormData) {
       observaciones: (formData.get("observaciones") as string) || null,
       presupuesto: presupuesto ? Number(presupuesto) : null,
       sena: sena ? Number(sena) : null,
-      fecha_entrega_estimada:
-        (formData.get("fecha_entrega_estimada") as string) || null,
+      prioridad: formData.get("prioridad") === "true",
     })
     .select()
     .single();
@@ -111,6 +110,12 @@ export async function createOrder(formData: FormData) {
       tipo: "sena",
       metodo: (formData.get("metodo_sena") as string) || "efectivo",
     });
+  }
+
+  const repuesto = formData.get("repuesto") as string;
+  if (repuesto && repuesto.trim()) {
+    const { createRepuesto } = await import("./repuestos");
+    await createRepuesto(repuesto.trim(), orden.id);
   }
 
   revalidatePath("/");
@@ -129,8 +134,6 @@ export async function updateOrder(id: string, formData: FormData) {
       problema: formData.get("problema") as string,
       observaciones: (formData.get("observaciones") as string) || null,
       presupuesto: presupuesto ? Number(presupuesto) : null,
-      fecha_entrega_estimada:
-        (formData.get("fecha_entrega_estimada") as string) || null,
     })
     .eq("id", id);
   if (error) throw error;
@@ -262,6 +265,137 @@ export async function getDailyCash(fecha?: string) {
 
   if (error) throw error;
   return data || [];
+}
+
+export async function getDeviceHistory(dispositivo: string) {
+  const db = createSupabaseServer();
+  const searchTerm = dispositivo.trim();
+  if (searchTerm.length < 3) return { count: 0, problemas: [] as { problema: string; count: number }[], avgPresupuesto: null };
+
+  const { data, error } = await db
+    .from("ordenes_reparacion")
+    .select("problema, presupuesto")
+    .ilike("dispositivo", `%${searchTerm}%`);
+
+  if (error || !data || data.length === 0) return { count: 0, problemas: [] as { problema: string; count: number }[], avgPresupuesto: null };
+
+  const freq: Record<string, number> = {};
+  let avgPresupuesto = 0;
+  let presCount = 0;
+  for (const o of data) {
+    const prob = o.problema?.toLowerCase().trim();
+    if (prob) freq[prob] = (freq[prob] || 0) + 1;
+    if (o.presupuesto) {
+      avgPresupuesto += Number(o.presupuesto);
+      presCount++;
+    }
+  }
+
+  const problemas = Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([problema, count]) => ({ problema, count }));
+
+  return {
+    count: data.length,
+    problemas,
+    avgPresupuesto: presCount > 0 ? Math.round(avgPresupuesto / presCount) : null,
+  };
+}
+
+export async function getMonthlyStats() {
+  try {
+    const db = createSupabaseServer();
+    const now = new Date();
+    const currentMonth = now.toISOString().slice(0, 7); // "2026-05"
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
+
+    // Current month orders
+    const { data: currentOrders } = await db
+      .from("ordenes_reparacion")
+      .select("presupuesto, pago_total, sena, fecha_ingreso, estado")
+      .gte("fecha_ingreso", `${currentMonth}-01`)
+      .lt("fecha_ingreso", `${currentMonth}-32`);
+
+    // Previous month orders
+    const { data: prevOrders } = await db
+      .from("ordenes_reparacion")
+      .select("presupuesto, pago_total, sena, fecha_ingreso, estado")
+      .gte("fecha_ingreso", `${prevMonth}-01`)
+      .lt("fecha_ingreso", `${prevMonth}-32`);
+
+    // Current month payments
+    const { data: currentPayments } = await db
+      .from("pagos")
+      .select("monto, created_at")
+      .gte("created_at", `${currentMonth}-01`)
+      .lt("created_at", `${currentMonth}-32`);
+
+    // Previous month payments
+    const { data: prevPayments } = await db
+      .from("pagos")
+      .select("monto, created_at")
+      .gte("created_at", `${prevMonth}-01`)
+      .lt("created_at", `${prevMonth}-32`);
+
+    // Current month sales (ventas)
+    const { data: currentSales } = await db
+      .from("ventas")
+      .select("monto, created_at")
+      .gte("created_at", `${currentMonth}-01`)
+      .lt("created_at", `${currentMonth}-32`);
+
+    const { data: prevSales } = await db
+      .from("ventas")
+      .select("monto, created_at")
+      .gte("created_at", `${prevMonth}-01`)
+      .lt("created_at", `${prevMonth}-32`);
+
+    const curr = currentOrders || [];
+    const prev = prevOrders || [];
+    const currPay = currentPayments || [];
+    const prevPay = prevPayments || [];
+    const currSales = currentSales || [];
+    const pSales = prevSales || [];
+
+    const currentRevenue = currPay.reduce((s, p) => s + Number(p.monto), 0) + currSales.reduce((s, v) => s + Number(v.monto), 0);
+    const prevRevenue = prevPay.reduce((s, p) => s + Number(p.monto), 0) + pSales.reduce((s, v) => s + Number(v.monto), 0);
+
+    const currentTicket = curr.length > 0
+      ? curr.reduce((s, o) => s + (Number(o.presupuesto) || 0), 0) / curr.length
+      : 0;
+
+    // Weekly breakdown for current month (simple: group by week number)
+    const weeks: number[] = [0, 0, 0, 0, 0];
+    for (const p of currPay) {
+      const day = new Date(p.created_at).getDate();
+      const week = Math.min(Math.floor((day - 1) / 7), 4);
+      weeks[week] += Number(p.monto);
+    }
+    for (const v of currSales) {
+      const day = new Date(v.created_at).getDate();
+      const week = Math.min(Math.floor((day - 1) / 7), 4);
+      weeks[week] += Number(v.monto);
+    }
+
+    return {
+      reparaciones: curr.length,
+      reparacionesPrev: prev.length,
+      ingresos: currentRevenue,
+      ingresosPrev: prevRevenue,
+      ticketPromedio: Math.round(currentTicket),
+      entregadas: curr.filter(o => o.estado === "entregado").length,
+      ventasProductos: currSales.length,
+      semanas: weeks,
+    };
+  } catch {
+    return {
+      reparaciones: 0, reparacionesPrev: 0,
+      ingresos: 0, ingresosPrev: 0,
+      ticketPromedio: 0, entregadas: 0,
+      ventasProductos: 0, semanas: [0, 0, 0, 0, 0],
+    };
+  }
 }
 
 export async function getDashboardStats() {
