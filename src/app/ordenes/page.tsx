@@ -44,7 +44,7 @@ export default async function OrdenesPage({
       />
 
       {ordenes.length === 0 ? (
-        <div className="bg-surface-800 border border-surface-600 rounded-xl p-12 text-center">
+        <div className="bg-surface-800 border border-surface-600 rounded-xl p-12 text-center mt-6">
           <p className="text-gray-500">No se encontraron órdenes</p>
         </div>
       ) : (
