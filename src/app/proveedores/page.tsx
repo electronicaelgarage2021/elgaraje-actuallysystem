@@ -38,9 +38,10 @@ export default async function ProveedoresPage() {
           </a>
         </div>
         <iframe
-          src="https://docs.google.com/spreadsheets/d/1lSdnSLsJHQ4bjLFC2GtaI_G85fjogyti9JzL0QT_0qc/preview?gid=222576120"
-          className="w-full border-0"
+          src="https://docs.google.com/spreadsheets/d/1lSdnSLsJHQ4bjLFC2GtaI_G85fjogyti9JzL0QT_0qc/htmlembed?gid=222576120"
+          className="w-full border-0 bg-white rounded-b-xl"
           style={{ height: "500px" }}
+          loading="lazy"
         />
       </div>
     </div>
