@@ -6,9 +6,10 @@ import type { PriceItem } from "@/lib/actions/price-list";
 
 export function PriceList({ data }: { data: PriceItem[] }) {
   const [query, setQuery] = useState("");
+  const [filterCategoria, setFilterCategoria] = useState("");
   const [filterMarca, setFilterMarca] = useState("");
 
-  const marcas = [...new Set(data.map((i) => i.marca))];
+  const categorias = [...new Set(data.map((i) => i.categoria))];
 
   if (data.length === 0) {
     return (
@@ -18,13 +19,20 @@ export function PriceList({ data }: { data: PriceItem[] }) {
     );
   }
 
+  const byCategoria = filterCategoria
+    ? data.filter((i) => i.categoria === filterCategoria)
+    : data;
+
+  const marcas = [...new Set(byCategoria.map((i) => i.marca))];
+
   const filtered = query.trim()
-    ? data.filter(
+    ? byCategoria.filter(
         (item) =>
           item.modelo.toLowerCase().includes(query.toLowerCase()) ||
-          item.marca.toLowerCase().includes(query.toLowerCase())
+          item.marca.toLowerCase().includes(query.toLowerCase()) ||
+          item.categoria.toLowerCase().includes(query.toLowerCase())
       )
-    : data;
+    : byCategoria;
 
   const shown = filterMarca
     ? filtered.filter((i) => i.marca === filterMarca)
@@ -59,34 +67,69 @@ export function PriceList({ data }: { data: PriceItem[] }) {
 
       <div className="px-5 py-2 border-b border-surface-600 flex flex-wrap gap-1.5">
         <button
-          onClick={() => setFilterMarca("")}
+          onClick={() => {
+            setFilterCategoria("");
+            setFilterMarca("");
+          }}
           className={`px-2.5 py-1 rounded-full text-[0.65rem] font-medium transition-colors ${
-            !filterMarca
+            !filterCategoria
               ? "bg-brand-teal/15 text-brand-teal border border-brand-teal/30"
               : "bg-surface-700 text-gray-400 hover:bg-surface-600"
           }`}
         >
-          Todas
+          Todas las categorías
         </button>
-        {marcas.map((m) => (
+        {categorias.map((c) => (
           <button
-            key={m}
-            onClick={() => setFilterMarca(m === filterMarca ? "" : m)}
+            key={c}
+            onClick={() => {
+              setFilterCategoria(c === filterCategoria ? "" : c);
+              setFilterMarca("");
+            }}
             className={`px-2.5 py-1 rounded-full text-[0.65rem] font-medium transition-colors ${
-              filterMarca === m
+              filterCategoria === c
                 ? "bg-brand-teal/15 text-brand-teal border border-brand-teal/30"
                 : "bg-surface-700 text-gray-400 hover:bg-surface-600"
             }`}
           >
-            {m}
+            {c}
           </button>
         ))}
       </div>
+
+      {filterCategoria && marcas.length > 1 && (
+        <div className="px-5 py-2 border-b border-surface-600 flex flex-wrap gap-1.5 bg-surface-900/30">
+          <button
+            onClick={() => setFilterMarca("")}
+            className={`px-2.5 py-1 rounded-full text-[0.65rem] font-medium transition-colors ${
+              !filterMarca
+                ? "bg-brand-teal/15 text-brand-teal border border-brand-teal/30"
+                : "bg-surface-700 text-gray-400 hover:bg-surface-600"
+            }`}
+          >
+            Todas las marcas
+          </button>
+          {marcas.map((m) => (
+            <button
+              key={m}
+              onClick={() => setFilterMarca(m === filterMarca ? "" : m)}
+              className={`px-2.5 py-1 rounded-full text-[0.65rem] font-medium transition-colors ${
+                filterMarca === m
+                  ? "bg-brand-teal/15 text-brand-teal border border-brand-teal/30"
+                  : "bg-surface-700 text-gray-400 hover:bg-surface-600"
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="overflow-x-auto" style={{ maxHeight: "450px", overflowY: "auto" }}>
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-surface-800 z-10">
             <tr className="border-b border-surface-600 text-gray-400 text-xs uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left font-medium">Categoría</th>
               <th className="px-4 py-2.5 text-left font-medium">Marca</th>
               <th className="px-4 py-2.5 text-left font-medium">Modelo</th>
               <th className="px-4 py-2.5 text-right font-medium">Precio</th>
@@ -95,13 +138,14 @@ export function PriceList({ data }: { data: PriceItem[] }) {
           <tbody className="divide-y divide-surface-700">
             {shown.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-gray-500 text-sm">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-500 text-sm">
                   Sin resultados{query ? ` para "${query}"` : ""}
                 </td>
               </tr>
             ) : (
               shown.map((item, i) => (
                 <tr key={i} className="card-hover">
+                  <td className="px-4 py-2 text-gray-500 text-xs">{item.categoria}</td>
                   <td className="px-4 py-2 text-gray-400 text-xs">{item.marca}</td>
                   <td className="px-4 py-2">{item.modelo}</td>
                   <td className="px-4 py-2 text-right text-green-400 font-medium">

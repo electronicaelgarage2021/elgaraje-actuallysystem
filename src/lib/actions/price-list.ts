@@ -1,9 +1,25 @@
 "use server";
 
 const SHEET_ID = "1lSdnSLsJHQ4bjLFC2GtaI_G85fjogyti9JzL0QT_0qc";
-const GID = "222576120";
+
+const TABS = [
+  "MODULOS",
+  "BATERIAS",
+  "MARCOS",
+  "PLACAS DE CARGA",
+  "FLEX MAIN",
+  "PARTES CHICAS",
+  "FLEX POWER/VOL",
+  "HUELLAS",
+  "PARLANTES",
+  "CAMARAS/VIDRIOS",
+  "GLASS/TAPAS",
+  "ACCESORIOS",
+  "HTAS-MAQ-INS",
+];
 
 export interface PriceItem {
+  categoria: string;
   marca: string;
   modelo: string;
   precio: string;
@@ -11,52 +27,59 @@ export interface PriceItem {
 
 export async function fetchPriceList(): Promise<PriceItem[]> {
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
-    const res = await fetch(url, { next: { revalidate: 300 } });
-    if (!res.ok) return [];
-    const csv = await res.text();
-    const rows = parseCSV(csv);
-    return extractProducts(rows);
+    const results = await Promise.all(
+      TABS.map((tab) => fetchTab(tab).catch(() => []))
+    );
+    return results.flat();
   } catch {
     return [];
   }
 }
 
-function extractProducts(rows: string[][]): PriceItem[] {
+async function fetchTab(tabName: string): Promise<PriceItem[]> {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
+  const res = await fetch(url, { next: { revalidate: 300 } });
+  if (!res.ok) return [];
+  const csv = await res.text();
+  const rows = parseCSV(csv);
+  return extractProducts(rows, tabName);
+}
+
+function extractProducts(rows: string[][], categoria: string): PriceItem[] {
   if (rows.length < 2) return [];
-
-  // Header row has brand names in pattern: "", "BRAND", "PRECIO", "", "BRAND", "PRECIO", ...
-  const header = rows[0];
-  const brands: { name: string; modelCol: number; priceCol: number }[] = [];
-
-  for (let i = 0; i < header.length; i++) {
-    const cell = header[i].trim().toUpperCase();
-    if (cell && cell !== "PRECIO" && !cell.startsWith("LISTA DE PRECIOS")) {
-      // This is a brand name, next col should be price
-      brands.push({ name: cell.trim(), modelCol: i, priceCol: i + 1 });
-    }
-  }
-
-  // If first brand detection failed, try alternate pattern
-  if (brands.length === 0) {
-    // Fallback: every 3 columns starting at 1
-    for (let i = 1; i < header.length; i += 3) {
-      const name = header[i]?.trim();
-      if (name && name.toUpperCase() !== "PRECIO") {
-        brands.push({ name, modelCol: i, priceCol: i + 1 });
-      }
-    }
-  }
 
   const items: PriceItem[] = [];
 
-  for (let r = 1; r < rows.length; r++) {
+  // Scan ALL rows for header rows (containing brand names followed by PRECIO)
+  // A header row is one where we find a pattern like "BRAND" followed by "PRECIO"
+  let currentBrands: { name: string; modelCol: number; priceCol: number }[] = [];
+
+  for (let r = 0; r < rows.length; r++) {
     const row = rows[r];
-    for (const brand of brands) {
+
+    // Check if this row looks like a header (has cells followed by PRECIO)
+    const possibleBrands: { name: string; modelCol: number; priceCol: number }[] = [];
+    for (let i = 0; i < row.length - 1; i++) {
+      const cell = row[i]?.trim().toUpperCase() || "";
+      const next = row[i + 1]?.trim().toUpperCase() || "";
+      if (cell && next === "PRECIO" && !cell.startsWith("LISTA DE PRECIOS") && cell !== "PRECIO" && cell !== "MODELO") {
+        possibleBrands.push({ name: row[i].trim(), modelCol: i, priceCol: i + 1 });
+      }
+    }
+
+    if (possibleBrands.length > 0) {
+      // This is a new header row, update current brand mapping
+      currentBrands = possibleBrands;
+      continue;
+    }
+
+    // Otherwise, treat as data row using current brand mapping
+    if (currentBrands.length === 0) continue;
+    for (const brand of currentBrands) {
       const modelo = row[brand.modelCol]?.trim() || "";
       const precio = row[brand.priceCol]?.trim() || "";
-      if (modelo && modelo.toUpperCase() !== "PRECIO") {
-        items.push({ marca: brand.name, modelo, precio });
+      if (modelo && modelo.toUpperCase() !== "PRECIO" && modelo.toUpperCase() !== "MODELO") {
+        items.push({ categoria, marca: brand.name, modelo, precio });
       }
     }
   }
