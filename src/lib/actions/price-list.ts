@@ -60,11 +60,19 @@ function extractProducts(rows: string[][], categoria: string): PriceItem[] {
     // Check if this row looks like a header (has cells followed by PRECIO)
     const possibleBrands: { name: string; modelCol: number; priceCol: number }[] = [];
     for (let i = 0; i < row.length - 1; i++) {
-      const cell = row[i]?.trim().toUpperCase() || "";
+      const rawCell = row[i]?.trim() || "";
       const next = row[i + 1]?.trim().toUpperCase() || "";
-      if (cell && next === "PRECIO" && !cell.startsWith("LISTA DE PRECIOS") && cell !== "PRECIO" && cell !== "MODELO") {
-        possibleBrands.push({ name: row[i].trim(), modelCol: i, priceCol: i + 1 });
-      }
+      if (!rawCell || next !== "PRECIO") continue;
+
+      // Clean cell: if it contains the merged title prefix, strip it
+      // Pattern: "LISTA DE PRECIOS BYTE REPUESTOS, CONSULTAR STOCK <BRAND>"
+      let brandName = rawCell.replace(/^LISTA DE PRECIOS[^a-z]*?STOCK\s+/i, "").trim();
+      const upper = brandName.toUpperCase();
+      if (!brandName || upper === "PRECIO" || upper === "MODELO") continue;
+      // Skip if still contains LISTA DE PRECIOS (no brand at end)
+      if (upper.includes("LISTA DE PRECIOS")) continue;
+
+      possibleBrands.push({ name: brandName, modelCol: i, priceCol: i + 1 });
     }
 
     if (possibleBrands.length > 0) {
