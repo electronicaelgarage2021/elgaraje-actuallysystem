@@ -24,16 +24,47 @@ type Movimiento =
   | { type: "pago"; id: string; monto: number; metodo: string; created_at: string; tipo: string; orden: any }
   | { type: "venta"; id: string; monto: number; metodo: string; created_at: string; producto: string; nota: string | null };
 
+function formatDateRange(desde: string, hasta: string): string {
+  const dDesde = new Date(desde + "T12:00:00");
+  const dHasta = new Date(hasta + "T12:00:00");
+
+  if (desde === hasta) {
+    // Single day: "Lunes 18 de mayo, 2026"
+    return format(dDesde, "EEEE d 'de' MMMM, yyyy", { locale: es });
+  }
+
+  const sameYear = dDesde.getFullYear() === dHasta.getFullYear();
+  const sameMonth = sameYear && dDesde.getMonth() === dHasta.getMonth();
+
+  if (sameMonth) {
+    // "12 - 18 de mayo, 2026"
+    return `${format(dDesde, "d", { locale: es })} - ${format(dHasta, "d 'de' MMMM, yyyy", { locale: es })}`;
+  }
+
+  if (sameYear) {
+    // "12 may - 18 jun, 2026"
+    return `${format(dDesde, "d MMM", { locale: es })} - ${format(dHasta, "d MMM, yyyy", { locale: es })}`;
+  }
+
+  // Different years
+  return `${format(dDesde, "d MMM yyyy", { locale: es })} - ${format(dHasta, "d MMM yyyy", { locale: es })}`;
+}
+
 export default async function CajaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fecha?: string }>;
+  searchParams: Promise<{ fecha?: string; desde?: string; hasta?: string }>;
 }) {
   const params = await searchParams;
-  const fecha = params.fecha || new Date().toISOString().split("T")[0];
+
+  // Backward compat: ?fecha=X treats as single day
+  const today = new Date().toISOString().split("T")[0];
+  const desde = params.desde || params.fecha || today;
+  const hasta = params.hasta || params.fecha || today;
+
   const [pagos, ventas] = await Promise.all([
-    getDailyCash(fecha),
-    getDailyVentas(fecha),
+    getDailyCash(desde, hasta),
+    getDailyVentas(desde, hasta),
   ]);
 
   // Build unified movimientos list sorted chronologically
@@ -51,16 +82,18 @@ export default async function CajaPage({
     porMetodo[m.metodo] = (porMetodo[m.metodo] || 0) + m.monto;
   }
 
-  const fechaDisplay = format(new Date(fecha + "T12:00:00"), "EEEE d 'de' MMMM, yyyy", { locale: es });
+  const isRange = desde !== hasta;
+  const fechaDisplay = formatDateRange(desde, hasta);
+  const periodLabel = isRange ? "Total del período" : "Total del día";
 
   return (
     <div className="fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+      <div className="flex flex-col md:flex-row md:items-start justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold">Caja Diaria</h1>
           <p className="text-gray-400 text-sm mt-1 capitalize">{fechaDisplay}</p>
         </div>
-        <CajaDatePicker currentDate={fecha} />
+        <CajaDatePicker desde={desde} hasta={hasta} />
       </div>
 
       {/* Summary cards */}
@@ -68,7 +101,7 @@ export default async function CajaPage({
         <div className="bg-surface-800 border border-surface-600 rounded-xl p-4 col-span-2 md:col-span-1">
           <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
             <TrendingUp className="w-3.5 h-3.5" />
-            Total del día
+            {periodLabel}
           </div>
           <p className="text-xl font-bold text-brand-teal">${totalDia.toLocaleString("es-AR")}</p>
           <p className="text-[0.65rem] text-gray-500">{movimientos.length} movimiento{movimientos.length !== 1 ? "s" : ""}</p>
@@ -107,7 +140,7 @@ export default async function CajaPage({
         </div>
         {movimientos.length === 0 ? (
           <div className="p-12 text-center text-gray-500 text-sm">
-            No hay movimientos para este día
+            No hay movimientos para {isRange ? "este período" : "este día"}
           </div>
         ) : (
           <div className="divide-y divide-surface-700">
@@ -137,7 +170,9 @@ export default async function CajaPage({
                         +${mov.monto.toLocaleString("es-AR")}
                       </p>
                       <p className="text-[0.65rem] text-gray-500">
-                        {format(new Date(mov.created_at), "HH:mm", { locale: es })}
+                        {isRange
+                          ? format(new Date(mov.created_at), "d MMM, HH:mm", { locale: es })
+                          : format(new Date(mov.created_at), "HH:mm", { locale: es })}
                       </p>
                     </div>
                   </div>
@@ -166,7 +201,9 @@ export default async function CajaPage({
                       +${mov.monto.toLocaleString("es-AR")}
                     </p>
                     <p className="text-[0.65rem] text-gray-500">
-                      {format(new Date(mov.created_at), "HH:mm", { locale: es })}
+                      {isRange
+                        ? format(new Date(mov.created_at), "d MMM, HH:mm", { locale: es })
+                        : format(new Date(mov.created_at), "HH:mm", { locale: es })}
                     </p>
                   </div>
                 </div>

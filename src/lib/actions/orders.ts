@@ -252,30 +252,32 @@ export async function exportOrders() {
   return data || [];
 }
 
-export async function getDailyCash(fecha?: string) {
+export async function getDailyCash(fecha?: string, fechaHasta?: string) {
   const db = createSupabaseServer();
-  const target = fecha || new Date().toISOString().split("T")[0];
+  const desde = fecha || new Date().toISOString().split("T")[0];
+  const hasta = fechaHasta || desde;
 
   const { data, error } = await db
     .from("pagos")
     .select("*, orden:ordenes_reparacion(numero, dispositivo, cliente:clientes(nombre))")
-    .gte("created_at", `${target}T00:00:00`)
-    .lt("created_at", `${target}T23:59:59.999`)
+    .gte("created_at", `${desde}T00:00:00`)
+    .lt("created_at", `${hasta}T23:59:59.999`)
     .order("created_at", { ascending: true });
 
   if (error) throw error;
   return data || [];
 }
 
-export async function getDailyVentas(fecha?: string) {
+export async function getDailyVentas(fecha?: string, fechaHasta?: string) {
   const db = createSupabaseServer();
-  const target = fecha || new Date().toISOString().split("T")[0];
+  const desde = fecha || new Date().toISOString().split("T")[0];
+  const hasta = fechaHasta || desde;
 
   const { data, error } = await db
     .from("ventas")
     .select("*")
-    .gte("created_at", `${target}T00:00:00`)
-    .lt("created_at", `${target}T23:59:59.999`)
+    .gte("created_at", `${desde}T00:00:00`)
+    .lt("created_at", `${hasta}T23:59:59.999`)
     .order("created_at", { ascending: true });
 
   if (error) throw error;
