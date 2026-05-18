@@ -158,9 +158,21 @@ export function PriceList({ data }: { data: PriceItem[] }) {
         </table>
       </div>
 
-      <div className="px-5 py-2 border-t border-surface-600 text-[0.65rem] text-gray-600 flex items-center gap-1.5">
-        <RefreshCw className="w-3 h-3" />
-        Se actualiza cada 5 min · {shown.length} de {data.length} productos
+      <div className="px-5 py-2 border-t border-surface-600 text-[0.65rem] text-gray-600">
+        <div className="flex items-center gap-1.5 mb-1">
+          <RefreshCw className="w-3 h-3" />
+          Se actualiza cada 5 min · {shown.length} de {data.length} productos
+        </div>
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-gray-700">
+          {categorias.map((c) => {
+            const count = data.filter((i) => i.categoria === c).length;
+            return (
+              <span key={c}>
+                {c}: <span className="text-gray-500">{count}</span>
+              </span>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
