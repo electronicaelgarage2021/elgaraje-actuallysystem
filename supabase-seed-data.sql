@@ -437,7 +437,13 @@ INSERT INTO ventas (producto, monto, metodo, nota, created_at) VALUES
 
   -- Día -1
   ('Cable USB tipo C 2m',              2500,  'debito',         NULL,                          now() - interval '1 day'),
-  ('Vidrio templado Xiaomi Redmi 12',  1800,  'efectivo',       NULL,                          now() - interval '1 day');
+  ('Vidrio templado Xiaomi Redmi 12',  1800,  'efectivo',       NULL,                          now() - interval '1 day'),
+
+  -- HOY
+  ('Cargador USB-C Samsung rápido',    4500,  'efectivo',       NULL,                          now() - interval '4 hours'),
+  ('Funda antigolpe Moto G73',         3000,  'debito',         NULL,                          now() - interval '3 hours'),
+  ('Cable HDMI 3m',                    5000,  'transferencia',  NULL,                          now() - interval '2 hours'),
+  ('Vidrio templado Samsung A14',      1500,  'efectivo',       'Cliente de reparación',       now() - interval '1 hour');
 
 
 -- =============================================

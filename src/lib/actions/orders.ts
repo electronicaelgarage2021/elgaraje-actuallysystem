@@ -267,6 +267,21 @@ export async function getDailyCash(fecha?: string) {
   return data || [];
 }
 
+export async function getDailyVentas(fecha?: string) {
+  const db = createSupabaseServer();
+  const target = fecha || new Date().toISOString().split("T")[0];
+
+  const { data, error } = await db
+    .from("ventas")
+    .select("*")
+    .gte("created_at", `${target}T00:00:00`)
+    .lt("created_at", `${target}T23:59:59.999`)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function getDeviceHistory(dispositivo: string) {
   const db = createSupabaseServer();
   const searchTerm = dispositivo.trim();

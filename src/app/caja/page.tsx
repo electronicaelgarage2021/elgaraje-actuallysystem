@@ -1,9 +1,9 @@
 export const dynamic = "force-dynamic";
 
-import { getDailyCash } from "@/lib/actions/orders";
+import { getDailyCash, getDailyVentas } from "@/lib/actions/orders";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { DollarSign, Banknote, CreditCard, ArrowLeftRight, TrendingUp } from "lucide-react";
+import { Banknote, CreditCard, ArrowLeftRight, TrendingUp, ShoppingBag, Wrench } from "lucide-react";
 import { CajaDatePicker } from "./caja-date-picker";
 
 const METODO_ICONS: Record<string, { icon: typeof Banknote; color: string }> = {
@@ -20,6 +20,10 @@ const METODO_LABELS: Record<string, string> = {
   credito: "Crédito",
 };
 
+type Movimiento =
+  | { type: "pago"; id: string; monto: number; metodo: string; created_at: string; tipo: string; orden: any }
+  | { type: "venta"; id: string; monto: number; metodo: string; created_at: string; producto: string; nota: string | null };
+
 export default async function CajaPage({
   searchParams,
 }: {
@@ -27,13 +31,24 @@ export default async function CajaPage({
 }) {
   const params = await searchParams;
   const fecha = params.fecha || new Date().toISOString().split("T")[0];
-  const pagos = await getDailyCash(fecha);
+  const [pagos, ventas] = await Promise.all([
+    getDailyCash(fecha),
+    getDailyVentas(fecha),
+  ]);
 
-  const totalDia = pagos.reduce((sum: number, p: any) => sum + Number(p.monto), 0);
+  // Build unified movimientos list sorted chronologically
+  const movimientos: Movimiento[] = [
+    ...pagos.map((p: any) => ({ type: "pago" as const, id: p.id, monto: Number(p.monto), metodo: p.metodo, created_at: p.created_at, tipo: p.tipo, orden: p.orden })),
+    ...ventas.map((v: any) => ({ type: "venta" as const, id: v.id, monto: Number(v.monto), metodo: v.metodo, created_at: v.created_at, producto: v.producto, nota: v.nota })),
+  ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  const totalDia = movimientos.reduce((sum, m) => sum + m.monto, 0);
+  const totalPagos = pagos.reduce((sum: number, p: any) => sum + Number(p.monto), 0);
+  const totalVentas = ventas.reduce((sum: number, v: any) => sum + Number(v.monto), 0);
 
   const porMetodo: Record<string, number> = {};
-  for (const p of pagos) {
-    porMetodo[p.metodo] = (porMetodo[p.metodo] || 0) + Number(p.monto);
+  for (const m of movimientos) {
+    porMetodo[m.metodo] = (porMetodo[m.metodo] || 0) + m.monto;
   }
 
   const fechaDisplay = format(new Date(fecha + "T12:00:00"), "EEEE d 'de' MMMM, yyyy", { locale: es });
@@ -56,7 +71,17 @@ export default async function CajaPage({
             Total del día
           </div>
           <p className="text-xl font-bold text-brand-teal">${totalDia.toLocaleString("es-AR")}</p>
-          <p className="text-[0.65rem] text-gray-500">{pagos.length} movimiento{pagos.length !== 1 ? "s" : ""}</p>
+          <p className="text-[0.65rem] text-gray-500">{movimientos.length} movimiento{movimientos.length !== 1 ? "s" : ""}</p>
+          {pagos.length > 0 && ventas.length > 0 && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-[0.6rem] text-gray-500 flex items-center gap-1">
+                <Wrench className="w-2.5 h-2.5" />${totalPagos.toLocaleString("es-AR")}
+              </span>
+              <span className="text-[0.6rem] text-gray-500 flex items-center gap-1">
+                <ShoppingBag className="w-2.5 h-2.5" />${totalVentas.toLocaleString("es-AR")}
+              </span>
+            </div>
+          )}
         </div>
 
         {Object.entries(METODO_LABELS).map(([key, label]) => {
@@ -80,36 +105,68 @@ export default async function CajaPage({
         <div className="px-5 py-3 border-b border-surface-600">
           <h2 className="text-sm font-semibold">Movimientos</h2>
         </div>
-        {pagos.length === 0 ? (
+        {movimientos.length === 0 ? (
           <div className="p-12 text-center text-gray-500 text-sm">
             No hay movimientos para este día
           </div>
         ) : (
           <div className="divide-y divide-surface-700">
-            {pagos.map((pago: any) => {
-              const config = METODO_ICONS[pago.metodo] || METODO_ICONS.efectivo;
+            {movimientos.map((mov) => {
+              const config = METODO_ICONS[mov.metodo] || METODO_ICONS.efectivo;
+
+              if (mov.type === "venta") {
+                return (
+                  <div key={`venta-${mov.id}`} className="px-5 py-3 flex items-center justify-between card-hover">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-amber-400 bg-surface-700">
+                        <ShoppingBag className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          <span className="text-amber-400/80 text-[0.65rem] font-semibold uppercase tracking-wide mr-1.5">Venta</span>
+                          {mov.producto}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {METODO_LABELS[mov.metodo] || mov.metodo}
+                          {mov.nota ? ` · ${mov.nota}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-brand-teal">
+                        +${mov.monto.toLocaleString("es-AR")}
+                      </p>
+                      <p className="text-[0.65rem] text-gray-500">
+                        {format(new Date(mov.created_at), "HH:mm", { locale: es })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Pago (repair payment)
               const Icon = config.icon;
               return (
-                <div key={pago.id} className="px-5 py-3 flex items-center justify-between card-hover">
+                <div key={`pago-${mov.id}`} className="px-5 py-3 flex items-center justify-between card-hover">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.color} bg-surface-700`}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">
-                        {pago.tipo === "sena" ? "Seña" : "Pago"} — Orden #{pago.orden?.numero}
+                        {mov.tipo === "sena" ? "Seña" : "Pago"} — Orden #{mov.orden?.numero}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {pago.orden?.cliente?.nombre} · {pago.orden?.dispositivo}
+                        {mov.orden?.cliente?.nombre} · {mov.orden?.dispositivo}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-brand-teal">
-                      +${Number(pago.monto).toLocaleString("es-AR")}
+                      +${mov.monto.toLocaleString("es-AR")}
                     </p>
                     <p className="text-[0.65rem] text-gray-500">
-                      {format(new Date(pago.created_at), "HH:mm", { locale: es })}
+                      {format(new Date(mov.created_at), "HH:mm", { locale: es })}
                     </p>
                   </div>
                 </div>

@@ -57,8 +57,8 @@ export function ProveedoresBoard({
 
   // Load phone numbers from localStorage
   useEffect(() => {
-    setTelCordoba(localStorage.getItem("proveedor_cordoba_tel") || "");
-    setTelVcp(localStorage.getItem("proveedor_vcp_tel") || "");
+    setTelCordoba(localStorage.getItem("proveedor_cordoba_tel") || "+54 9 3513 12-3039");
+    setTelVcp(localStorage.getItem("proveedor_vcp_tel") || "+54 9 3541 37-8737");
   }, []);
 
   function saveTelCordoba(val: string) {
@@ -272,7 +272,7 @@ export function ProveedoresBoard({
       <ProveedorColumn
         key="cordoba"
         id="cordoba"
-        label="Proveedor Cordoba"
+        label="BYTE CBA"
         accentBg="bg-orange-500/10"
         accentBorder="border-orange-500/20"
         accentText="text-orange-400"
@@ -300,7 +300,7 @@ export function ProveedoresBoard({
       <ProveedorColumn
         key="vcp"
         id="vcp"
-        label="Proveedor Villa Carlos Paz"
+        label="TREXCELL VCP"
         accentBg="bg-cyan-500/10"
         accentBorder="border-cyan-500/20"
         accentText="text-cyan-400"
