@@ -1,7 +1,6 @@
 export type EstadoOrden =
   | "recibido"
   | "en_reparacion"
-  | "en_espera"
   | "finalizado"
   | "entregado";
 

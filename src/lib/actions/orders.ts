@@ -210,6 +210,35 @@ export async function registerPayment(formData: FormData) {
   revalidatePath(`/ordenes/${ordenId}`);
 }
 
+export async function deletePayment(paymentId: string, ordenId: string) {
+  const db = createSupabaseServer();
+
+  // Get the payment first to know its type and amount
+  const { data: pago, error: fetchError } = await db
+    .from("pagos")
+    .select("*")
+    .eq("id", paymentId)
+    .single();
+  if (fetchError) throw fetchError;
+
+  // Delete the payment
+  const { error } = await db.from("pagos").delete().eq("id", paymentId);
+  if (error) throw error;
+
+  // If it was a seña, reset the order's sena field to null
+  if (pago.tipo === "sena") {
+    await db.from("ordenes_reparacion").update({ sena: null }).eq("id", ordenId);
+  }
+  // If it was a pago_final, reset pago_total to null
+  if (pago.tipo === "pago_final") {
+    await db.from("ordenes_reparacion").update({ pago_total: null }).eq("id", ordenId);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/ordenes");
+  revalidatePath(`/ordenes/${ordenId}`);
+}
+
 export async function exportOrders() {
   const db = createSupabaseServer();
   const { data, error } = await db

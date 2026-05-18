@@ -10,6 +10,7 @@ import {
   MapPin,
   Columns3,
   Wallet,
+  ShoppingBag,
   CalendarDays,
 } from "lucide-react";
 import { Logo } from "./logo";
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: "/ordenes/nueva", label: "Nueva Orden", icon: PlusCircle },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/caja", label: "Caja Diaria", icon: Wallet },
+  { href: "/ventas", label: "Ventas", icon: ShoppingBag },
   { href: "/calendario", label: "Calendario", icon: CalendarDays },
 ];
 

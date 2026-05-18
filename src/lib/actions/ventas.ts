@@ -1,0 +1,71 @@
+"use server";
+
+import { createSupabaseServer } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+
+export async function getVentas(fecha?: string) {
+  const db = createSupabaseServer();
+  const target = fecha || new Date().toISOString().split("T")[0];
+
+  const { data, error } = await db
+    .from("ventas")
+    .select("*")
+    .gte("created_at", `${target}T00:00:00`)
+    .lt("created_at", `${target}T23:59:59.999`)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createVenta(formData: FormData) {
+  const db = createSupabaseServer();
+
+  const producto = formData.get("producto") as string;
+  const monto = Number(formData.get("monto"));
+  const metodo = formData.get("metodo") as string;
+  const nota = (formData.get("nota") as string) || null;
+
+  const { error } = await db.from("ventas").insert({
+    producto,
+    monto,
+    metodo,
+    nota,
+  });
+
+  if (error) throw error;
+  revalidatePath("/ventas");
+}
+
+export async function deleteVenta(id: string) {
+  const db = createSupabaseServer();
+
+  const { error } = await db.from("ventas").delete().eq("id", id);
+
+  if (error) throw error;
+  revalidatePath("/ventas");
+}
+
+export async function getVentasStats(fecha?: string) {
+  const db = createSupabaseServer();
+  const target = fecha || new Date().toISOString().split("T")[0];
+
+  const { data, error } = await db
+    .from("ventas")
+    .select("monto, metodo")
+    .gte("created_at", `${target}T00:00:00`)
+    .lt("created_at", `${target}T23:59:59.999`);
+
+  if (error) throw error;
+
+  const ventas = data || [];
+  const total = ventas.reduce((sum, v) => sum + Number(v.monto), 0);
+  const cantidad = ventas.length;
+  const porMetodo: Record<string, number> = {};
+
+  for (const v of ventas) {
+    porMetodo[v.metodo] = (porMetodo[v.metodo] || 0) + Number(v.monto);
+  }
+
+  return { total, cantidad, porMetodo };
+}

@@ -9,9 +9,8 @@ import { Check } from "lucide-react";
 const STATE_COLORS: Record<number, { bg: string; text: string; ring: string }> = {
   0: { bg: "bg-blue-500", text: "text-blue-400", ring: "ring-blue-500/20" },
   1: { bg: "bg-purple-500", text: "text-purple-400", ring: "ring-purple-500/20" },
-  2: { bg: "bg-yellow-500", text: "text-yellow-400", ring: "ring-yellow-500/20" },
-  3: { bg: "bg-green-500", text: "text-green-400", ring: "ring-green-500/20" },
-  4: { bg: "bg-gray-400", text: "text-gray-300", ring: "ring-gray-400/20" },
+  2: { bg: "bg-green-500", text: "text-green-400", ring: "ring-green-500/20" },
+  3: { bg: "bg-gray-400", text: "text-gray-300", ring: "ring-gray-400/20" },
 };
 
 interface OrderTimelineProps {

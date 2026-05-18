@@ -1,7 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { getDashboardStats, getOrders } from "@/lib/actions/orders";
+import { getTareas } from "@/lib/actions/tareas";
 import { EstadoBadge } from "@/components/estado-badge";
+import { DashboardTareas } from "@/components/dashboard-tareas";
 import { Check, PlusCircle, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -10,9 +12,10 @@ import { DashboardEntregarBtn } from "@/components/dashboard-entregar-btn";
 import { ExportButton } from "@/components/export-button";
 
 export default async function Dashboard() {
-  const [stats, ordenes] = await Promise.all([
+  const [stats, ordenes, tareas] = await Promise.all([
     getDashboardStats(),
     getOrders(),
+    getTareas(),
   ]);
 
   const finalizadas = ordenes.filter((o: any) => o.estado === "finalizado");
@@ -76,6 +79,11 @@ export default async function Dashboard() {
           <div className="text-3xl font-bold text-brand-red">{equiposAbandonados.length}</div>
           <div className="text-xs text-brand-red/60 mt-1">Equipos abandonados</div>
         </div>
+      </div>
+
+      {/* Tareas del día */}
+      <div className="mb-6">
+        <DashboardTareas initialTareas={tareas} />
       </div>
 
       {/* Two-column layout */}

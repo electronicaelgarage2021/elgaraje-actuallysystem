@@ -254,7 +254,7 @@ export default async function OrdenDetalle({
                 </div>
               </>
             )}
-            <PaymentHistory pagos={pagos} />
+            <PaymentHistory pagos={pagos} ordenId={id} />
           </div>
         </div>
       </div>

@@ -19,12 +19,6 @@ export const ESTADOS: {
     bgColor: "bg-purple-500/15 text-purple-400",
   },
   {
-    value: "en_espera",
-    label: "En espera",
-    color: "text-yellow-400",
-    bgColor: "bg-yellow-500/15 text-yellow-400",
-  },
-  {
     value: "finalizado",
     label: "Finalizado",
     color: "text-green-400",

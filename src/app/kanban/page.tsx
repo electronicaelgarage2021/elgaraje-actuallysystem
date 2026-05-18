@@ -7,7 +7,6 @@ import type { EstadoOrden } from "@/lib/types";
 const COLUMNAS: { estado: EstadoOrden; label: string; color: string }[] = [
   { estado: "recibido", label: "Recibido", color: "blue" },
   { estado: "en_reparacion", label: "En reparación", color: "purple" },
-  { estado: "en_espera", label: "En espera", color: "yellow" },
   { estado: "finalizado", label: "Finalizado", color: "green" },
   { estado: "entregado", label: "Entregado", color: "gray" },
 ];
