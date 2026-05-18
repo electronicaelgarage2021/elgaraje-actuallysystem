@@ -3,15 +3,17 @@
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function getVentas(fecha?: string) {
+export async function getVentas(desde?: string, hasta?: string) {
   const db = createSupabaseServer();
-  const target = fecha || new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
+  const d = desde || today;
+  const h = hasta || d;
 
   const { data, error } = await db
     .from("ventas")
     .select("*")
-    .gte("created_at", `${target}T00:00:00`)
-    .lt("created_at", `${target}T23:59:59.999`)
+    .gte("created_at", `${d}T00:00:00`)
+    .lt("created_at", `${h}T23:59:59.999`)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -46,15 +48,17 @@ export async function deleteVenta(id: string) {
   revalidatePath("/ventas");
 }
 
-export async function getVentasStats(fecha?: string) {
+export async function getVentasStats(desde?: string, hasta?: string) {
   const db = createSupabaseServer();
-  const target = fecha || new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
+  const d = desde || today;
+  const h = hasta || d;
 
   const { data, error } = await db
     .from("ventas")
     .select("monto, metodo")
-    .gte("created_at", `${target}T00:00:00`)
-    .lt("created_at", `${target}T23:59:59.999`);
+    .gte("created_at", `${d}T00:00:00`)
+    .lt("created_at", `${h}T23:59:59.999`);
 
   if (error) throw error;
 

@@ -324,49 +324,50 @@ export async function getMonthlyStats() {
   try {
     const db = createSupabaseServer();
     const now = new Date();
-    const currentMonth = now.toISOString().slice(0, 7); // "2026-05"
-    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
+    const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split("T")[0];
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split("T")[0];
 
     // Current month orders
     const { data: currentOrders } = await db
       .from("ordenes_reparacion")
       .select("presupuesto, pago_total, sena, fecha_ingreso, estado")
-      .gte("fecha_ingreso", `${currentMonth}-01`)
-      .lt("fecha_ingreso", `${currentMonth}-32`);
+      .gte("fecha_ingreso", currentMonthStart)
+      .lt("fecha_ingreso", nextMonthStart);
 
     // Previous month orders
     const { data: prevOrders } = await db
       .from("ordenes_reparacion")
       .select("presupuesto, pago_total, sena, fecha_ingreso, estado")
-      .gte("fecha_ingreso", `${prevMonth}-01`)
-      .lt("fecha_ingreso", `${prevMonth}-32`);
+      .gte("fecha_ingreso", prevMonthStart)
+      .lt("fecha_ingreso", currentMonthStart);
 
     // Current month payments
     const { data: currentPayments } = await db
       .from("pagos")
       .select("monto, created_at")
-      .gte("created_at", `${currentMonth}-01`)
-      .lt("created_at", `${currentMonth}-32`);
+      .gte("created_at", currentMonthStart)
+      .lt("created_at", nextMonthStart);
 
     // Previous month payments
     const { data: prevPayments } = await db
       .from("pagos")
       .select("monto, created_at")
-      .gte("created_at", `${prevMonth}-01`)
-      .lt("created_at", `${prevMonth}-32`);
+      .gte("created_at", prevMonthStart)
+      .lt("created_at", currentMonthStart);
 
     // Current month sales (ventas)
     const { data: currentSales } = await db
       .from("ventas")
       .select("monto, created_at")
-      .gte("created_at", `${currentMonth}-01`)
-      .lt("created_at", `${currentMonth}-32`);
+      .gte("created_at", currentMonthStart)
+      .lt("created_at", nextMonthStart);
 
     const { data: prevSales } = await db
       .from("ventas")
       .select("monto, created_at")
-      .gte("created_at", `${prevMonth}-01`)
-      .lt("created_at", `${prevMonth}-32`);
+      .gte("created_at", prevMonthStart)
+      .lt("created_at", currentMonthStart);
 
     const curr = currentOrders || [];
     const prev = prevOrders || [];

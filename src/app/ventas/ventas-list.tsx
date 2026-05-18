@@ -30,7 +30,7 @@ interface Venta {
   created_at: string;
 }
 
-export function VentasList({ ventas }: { ventas: Venta[] }) {
+export function VentasList({ ventas, isRange = false }: { ventas: Venta[]; isRange?: boolean }) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -50,10 +50,10 @@ export function VentasList({ ventas }: { ventas: Venta[] }) {
     return (
       <div className="bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-surface-600">
-          <h2 className="text-sm font-semibold">Ventas del dia</h2>
+          <h2 className="text-sm font-semibold">{isRange ? "Ventas del período" : "Ventas del día"}</h2>
         </div>
         <div className="p-12 text-center text-gray-500 text-sm">
-          No hay ventas registradas para este dia
+          No hay ventas registradas para {isRange ? "este período" : "este día"}
         </div>
       </div>
     );
@@ -62,7 +62,7 @@ export function VentasList({ ventas }: { ventas: Venta[] }) {
   return (
     <div className="bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
       <div className="px-5 py-3 border-b border-surface-600">
-        <h2 className="text-sm font-semibold">Ventas del dia</h2>
+        <h2 className="text-sm font-semibold">{isRange ? "Ventas del período" : "Ventas del día"}</h2>
       </div>
       <div className="divide-y divide-surface-700">
         {ventas.map((venta) => {
@@ -88,7 +88,9 @@ export function VentasList({ ventas }: { ventas: Venta[] }) {
                     +${Number(venta.monto).toLocaleString("es-AR")}
                   </p>
                   <p className="text-[0.65rem] text-gray-500">
-                    {format(new Date(venta.created_at), "HH:mm", { locale: es })}
+                    {isRange
+                      ? format(new Date(venta.created_at), "d MMM, HH:mm", { locale: es })
+                      : format(new Date(venta.created_at), "HH:mm", { locale: es })}
                   </p>
                 </div>
                 <button
