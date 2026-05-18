@@ -86,7 +86,7 @@ export function CajaDatePicker({ desde, hasta }: CajaDatePickerProps) {
   const [customHasta, setCustomHasta] = useState(hasta);
 
   function navigateRange(d: string, h: string) {
-    router.push(`/caja?desde=${d}&hasta=${h}`);
+    window.location.href = `/caja?desde=${d}&hasta=${h}`;
   }
 
   function handleQuickSelect(key: RangeKey) {

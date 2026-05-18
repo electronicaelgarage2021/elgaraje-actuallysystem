@@ -86,7 +86,7 @@ export function VentasRangePicker({ desde, hasta }: VentasRangePickerProps) {
   const [customHasta, setCustomHasta] = useState(hasta);
 
   function navigateRange(d: string, h: string) {
-    router.push(`/ventas?desde=${d}&hasta=${h}`);
+    window.location.href = `/ventas?desde=${d}&hasta=${h}`;
   }
 
   function handleQuickSelect(key: RangeKey) {
