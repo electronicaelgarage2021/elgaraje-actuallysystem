@@ -85,7 +85,7 @@ export default async function VentasPage({
             <TrendingUp className="w-3.5 h-3.5" />
             {periodLabel}
           </div>
-          <p className="text-xl font-bold text-brand-teal">${stats.total.toLocaleString("es-AR")}</p>
+          <p className="text-xl font-bold text-green-400">${stats.total.toLocaleString("es-AR")}</p>
           <p className="text-[0.65rem] text-gray-500">{stats.cantidad} venta{stats.cantidad !== 1 ? "s" : ""}</p>
         </div>
 

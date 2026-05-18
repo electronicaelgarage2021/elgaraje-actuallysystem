@@ -77,7 +77,7 @@ export function PaymentModal({
             {saldo !== null && (
               <div className="flex justify-between mt-1 pt-1 border-t border-surface-600">
                 <span className="text-gray-400 font-medium">Saldo pendiente</span>
-                <span className="font-bold text-brand-teal">${saldo.toLocaleString("es-AR")}</span>
+                <span className="font-bold text-red-400">${saldo.toLocaleString("es-AR")}</span>
               </div>
             )}
           </div>

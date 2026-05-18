@@ -170,7 +170,7 @@ export default async function OrdenDetalle({
             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-surface-700">
               <div>
                 <span className="text-gray-400 text-xs">Presupuesto</span>
-                <p className="text-lg font-bold text-brand-teal mt-0.5">
+                <p className="text-lg font-bold text-green-400 mt-0.5">
                   ${orden.presupuesto.toLocaleString("es-AR")}
                 </p>
               </div>
@@ -223,7 +223,7 @@ export default async function OrdenDetalle({
                     <span className="text-gray-400">
                       {pago.tipo === "sena" ? "Seña" : "Pago"} ({pago.metodo})
                     </span>
-                    <span className="text-brand-teal font-medium">
+                    <span className="text-green-400 font-medium">
                       ${Number(pago.monto).toLocaleString("es-AR")}
                     </span>
                   </div>
@@ -231,7 +231,7 @@ export default async function OrdenDetalle({
                 {resta !== null && resta > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Saldo</span>
-                    <span className="font-semibold text-brand-teal">
+                    <span className="font-semibold text-red-400">
                       ${resta.toLocaleString("es-AR")}
                     </span>
                   </div>
@@ -252,7 +252,7 @@ export default async function OrdenDetalle({
                 {orden.presupuesto && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Saldo</span>
-                    <span className="font-semibold text-brand-teal">
+                    <span className="font-semibold text-red-400">
                       ${orden.presupuesto.toLocaleString("es-AR")}
                     </span>
                   </div>

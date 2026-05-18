@@ -103,7 +103,7 @@ export default async function CajaPage({
             <TrendingUp className="w-3.5 h-3.5" />
             {periodLabel}
           </div>
-          <p className="text-xl font-bold text-brand-teal">${totalDia.toLocaleString("es-AR")}</p>
+          <p className="text-xl font-bold text-green-400">${totalDia.toLocaleString("es-AR")}</p>
           <p className="text-[0.65rem] text-gray-500">{movimientos.length} movimiento{movimientos.length !== 1 ? "s" : ""}</p>
           {pagos.length > 0 && ventas.length > 0 && (
             <div className="flex items-center gap-2 mt-1.5">
@@ -166,7 +166,7 @@ export default async function CajaPage({
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-brand-teal">
+                      <p className="text-sm font-bold text-green-400">
                         +${mov.monto.toLocaleString("es-AR")}
                       </p>
                       <p className="text-[0.65rem] text-gray-500">
@@ -197,7 +197,7 @@ export default async function CajaPage({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-brand-teal">
+                    <p className="text-sm font-bold text-green-400">
                       +${mov.monto.toLocaleString("es-AR")}
                     </p>
                     <p className="text-[0.65rem] text-gray-500">

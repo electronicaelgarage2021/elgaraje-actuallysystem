@@ -169,7 +169,7 @@ export function KanbanBoard({ initialColumnas }: { initialColumnas: KanbanColumn
                     <p className="text-[0.65rem] text-gray-600 truncate mt-0.5">{orden.problema}</p>
 
                     {orden.presupuesto && (
-                      <p className="text-xs text-brand-teal font-medium mt-1.5">
+                      <p className="text-xs text-green-400 font-medium mt-1.5">
                         ${orden.presupuesto.toLocaleString("es-AR")}
                       </p>
                     )}

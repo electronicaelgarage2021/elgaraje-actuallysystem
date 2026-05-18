@@ -37,7 +37,7 @@ export function DashboardMonthly({ stats }: { stats: MonthlyStats }) {
           <h2 className="font-semibold text-sm">Resumen del mes</h2>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-brand-teal">
+          <span className="text-sm font-bold text-green-400">
             ${stats.ingresos.toLocaleString("es-AR")}
           </span>
           {ingresoDiff !== 0 && (

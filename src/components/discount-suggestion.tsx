@@ -25,7 +25,7 @@ export function DiscountSuggestion({ clientName, orderCount, presupuesto }: Disc
           Cliente frecuente — {orderCount} reparaciones
         </p>
         <p className="text-[0.65rem] text-gray-400 mt-0.5">
-          Sugerencia: {discountPercent}% de descuento a {clientName} (-${discountAmount.toLocaleString("es-AR")})
+          Sugerencia: {discountPercent}% de descuento a {clientName} (<span className="text-red-400">-${discountAmount.toLocaleString("es-AR")}</span>)
         </p>
       </div>
       <button

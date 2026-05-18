@@ -68,7 +68,7 @@ export function PaymentHistory({ pagos, ordenId }: { pagos: Pago[]; ordenId: str
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <span className="text-xs font-bold text-brand-teal">
+                    <span className="text-xs font-bold text-green-400">
                       ${Number(pago.monto).toLocaleString("es-AR")}
                     </span>
                     <span className="text-[0.6rem] text-gray-600 ml-2">

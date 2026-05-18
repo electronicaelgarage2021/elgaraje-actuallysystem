@@ -50,7 +50,7 @@ export function DeviceHistoryHint({ dispositivo }: { dispositivo: string }) {
       {data.avgPresupuesto && (
         <div className="text-xs text-gray-500 mt-1.5">
           Presupuesto promedio:{" "}
-          <span className="text-brand-teal font-medium">
+          <span className="text-green-400 font-medium">
             ${data.avgPresupuesto.toLocaleString("es-AR")}
           </span>
         </div>

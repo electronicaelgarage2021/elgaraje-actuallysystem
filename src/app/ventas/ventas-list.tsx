@@ -84,7 +84,7 @@ export function VentasList({ ventas, isRange = false }: { ventas: Venta[]; isRan
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-sm font-bold text-brand-teal">
+                  <p className="text-sm font-bold text-green-400">
                     +${Number(venta.monto).toLocaleString("es-AR")}
                   </p>
                   <p className="text-[0.65rem] text-gray-500">

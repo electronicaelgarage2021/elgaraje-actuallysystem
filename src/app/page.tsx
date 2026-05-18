@@ -143,7 +143,7 @@ export default async function Dashboard() {
                       <span className="text-xs text-gray-500 font-mono">#{orden.numero}</span>
                       <span className="text-sm font-medium">{orden.dispositivo}</span>
                       {orden.presupuesto && (
-                        <span className="text-sm text-brand-teal font-semibold ml-auto mr-2">
+                        <span className="text-sm text-green-400 font-semibold ml-auto mr-2">
                           ${orden.presupuesto.toLocaleString("es-AR")}
                         </span>
                       )}

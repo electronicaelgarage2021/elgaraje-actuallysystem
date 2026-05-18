@@ -219,7 +219,7 @@ export function CalendarView({
                   )}
                 </h3>
                 {daySummary && !loadingDay && (
-                  <p className="text-sm text-brand-teal font-semibold mt-0.5">
+                  <p className="text-sm text-green-400 font-semibold mt-0.5">
                     Caja del dia: $
                     {daySummary.totalCaja.toLocaleString("es-AR")}
                   </p>
@@ -262,7 +262,7 @@ export function CalendarView({
                             </span>
                           </span>
                           {o.presupuesto && (
-                            <span className="text-brand-teal font-medium">
+                            <span className="text-green-400 font-medium">
                               ${Number(o.presupuesto).toLocaleString("es-AR")}
                             </span>
                           )}
@@ -323,7 +323,7 @@ export function CalendarView({
                               ({p.metodo})
                             </span>
                           </span>
-                          <span className="text-brand-teal font-medium">
+                          <span className="text-green-400 font-medium">
                             ${Number(p.monto).toLocaleString("es-AR")}
                           </span>
                         </div>
@@ -352,7 +352,7 @@ export function CalendarView({
                               ({v.metodo})
                             </span>
                           </span>
-                          <span className="text-amber-400 font-medium">
+                          <span className="text-green-400 font-medium">
                             ${Number(v.monto).toLocaleString("es-AR")}
                           </span>
                         </div>
