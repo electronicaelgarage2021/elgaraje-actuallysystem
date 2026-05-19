@@ -4,6 +4,23 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { EstadoOrden } from "@/lib/types";
 
+export async function getOrdersToday() {
+  try {
+    const db = createSupabaseServer();
+    const hoy = new Date().toISOString().split("T")[0];
+    const { data, error } = await db
+      .from("ordenes_reparacion")
+      .select("id, numero, dispositivo, problema, estado, fecha_ingreso, cliente:clientes(nombre, telefono)")
+      .gte("fecha_ingreso", `${hoy}T00:00:00`)
+      .lt("fecha_ingreso", `${hoy}T23:59:59.999`)
+      .order("fecha_ingreso", { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
 export async function getOrders(filters?: {
   estado?: EstadoOrden;
   busqueda?: string;
