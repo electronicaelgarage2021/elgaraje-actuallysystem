@@ -152,9 +152,12 @@ function extractProducts(rows: string[][], categoria: string): PriceItem[] {
           if (/\d/.test(alt)) { precio = alt; break; }
         }
       }
-      if (modelo && modelo.toUpperCase() !== "PRECIO" && modelo.toUpperCase() !== "MODELO") {
-        items.push({ categoria, marca: brand.name, modelo, precio });
-      }
+      if (!modelo) continue;
+      const modeloUpper = modelo.toUpperCase();
+      if (modeloUpper === "PRECIO" || modeloUpper === "MODELO") continue;
+      // Skip sub-section headers: pure text (no digits) AND no price
+      if (!precio && !/\d/.test(modelo)) continue;
+      items.push({ categoria, marca: brand.name, modelo, precio });
     }
   }
 
