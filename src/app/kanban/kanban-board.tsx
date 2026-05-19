@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { updateOrderEstado } from "@/lib/actions/orders";
+import { updateOrderEstado, cancelOrder } from "@/lib/actions/orders";
 import { buildWhatsAppUrl, buildMensajeEntrega } from "@/lib/constants";
 import type { EstadoOrden } from "@/lib/types";
-import { Eye, DollarSign, MessageCircle, GripVertical } from "lucide-react";
+import { Eye, DollarSign, MessageCircle, GripVertical, X } from "lucide-react";
 import Link from "next/link";
 
 interface KanbanOrden {
@@ -102,6 +102,22 @@ export function KanbanBoard({ initialColumnas }: { initialColumnas: KanbanColumn
     );
   }
 
+  async function handleDelete(e: React.MouseEvent, ordenId: string, dispositivo: string) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!confirm(`¿Eliminar la orden de ${dispositivo}? Esta acción no se puede deshacer.`)) return;
+    // Optimistic remove
+    setColumnas((prev) =>
+      prev.map((col) => ({ ...col, ordenes: col.ordenes.filter((o) => o.id !== ordenId) }))
+    );
+    try {
+      await cancelOrder(ordenId);
+    } catch (err) {
+      console.error(err);
+      alert("Error al eliminar la orden");
+    }
+  }
+
   return (
     <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 md:-mx-8 md:px-8">
       {columnas.map((col) => {
@@ -161,6 +177,13 @@ export function KanbanBoard({ initialColumnas }: { initialColumnas: KanbanColumn
                             {dias}d
                           </span>
                         )}
+                        <button
+                          onClick={(e) => handleDelete(e, orden.id, orden.dispositivo)}
+                          className="p-0.5 rounded text-gray-600 hover:text-brand-red hover:bg-brand-red/10 transition-colors"
+                          title="Eliminar orden"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
 

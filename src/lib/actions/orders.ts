@@ -163,6 +163,7 @@ export async function cancelOrder(id: string) {
   if (error) throw error;
   revalidatePath("/");
   revalidatePath("/ordenes");
+  revalidatePath("/kanban");
 }
 
 export async function updateOrderWarranty(id: string, garantia: string) {
