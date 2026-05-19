@@ -168,17 +168,16 @@ export function PriceList({ data }: { data: PriceItem[] }) {
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-surface-800 z-10">
             <tr className="border-b border-surface-600 text-gray-400 text-xs uppercase tracking-wider">
-              <th className="px-4 py-2.5 text-left font-medium">Categoría</th>
-              <th className="px-4 py-2.5 text-left font-medium">Marca</th>
-              <th className="px-4 py-2.5 text-left font-medium">Modelo</th>
-              <th className="px-4 py-2.5 text-right font-medium">Precio</th>
-              <th className="px-2 py-2.5 w-10"></th>
+              <th className="px-3 py-2.5 text-left font-medium">Marca</th>
+              <th className="px-3 py-2.5 text-left font-medium">Modelo</th>
+              <th className="px-3 py-2.5 text-right font-medium">Precio</th>
+              <th className="px-1 py-2.5 w-8"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-700">
             {shown.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500 text-sm">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-500 text-sm">
                   Sin resultados{query ? ` para "${query}"` : ""}
                 </td>
               </tr>
@@ -188,13 +187,15 @@ export function PriceList({ data }: { data: PriceItem[] }) {
                 const isAdded = added.has(key);
                 return (
                 <tr key={i} className="card-hover">
-                  <td className="px-4 py-2 text-gray-500 text-xs">{item.categoria}</td>
-                  <td className="px-4 py-2 text-gray-400 text-xs">{item.marca}</td>
-                  <td className="px-4 py-2">{item.modelo}</td>
-                  <td className="px-4 py-2 text-right text-green-400 font-medium">
+                  <td className="px-3 py-2 text-gray-400 text-xs whitespace-nowrap">{item.marca}</td>
+                  <td className="px-3 py-2 text-sm">
+                    <div className="truncate max-w-[200px] lg:max-w-[180px] xl:max-w-[260px]">{item.modelo}</div>
+                    <div className="text-[0.6rem] text-gray-600">{item.categoria}</div>
+                  </td>
+                  <td className="px-3 py-2 text-right text-green-400 font-medium whitespace-nowrap">
                     {item.precio ? `$${item.precio}` : "-"}
                   </td>
-                  <td className="px-2 py-2 text-center">
+                  <td className="px-1 py-2 text-center">
                     <button
                       onClick={() => handleAdd(item)}
                       title={isAdded ? "¡Agregado!" : "Agregar a lista de pedidos"}

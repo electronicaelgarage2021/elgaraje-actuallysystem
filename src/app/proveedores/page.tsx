@@ -31,7 +31,7 @@ export default async function ProveedoresPage() {
         initialCordoba={cordoba}
         initialVcp={vcp}
       />
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         <PriceList data={priceData} />
         <IngresosHoy data={ingresosHoy as any} />
       </div>
