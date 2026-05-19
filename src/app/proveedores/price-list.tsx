@@ -1,13 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ExternalLink, RefreshCw } from "lucide-react";
+import { useState, useTransition } from "react";
+import { Search, ExternalLink, RefreshCw, Plus, Check } from "lucide-react";
 import type { PriceItem } from "@/lib/actions/price-list";
+import { createRepuesto } from "@/lib/actions/repuestos";
 
 export function PriceList({ data }: { data: PriceItem[] }) {
   const [query, setQuery] = useState("");
   const [filterCategoria, setFilterCategoria] = useState("");
   const [filterMarca, setFilterMarca] = useState("");
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  const [, startTransition] = useTransition();
+
+  function handleAdd(item: PriceItem) {
+    const key = `${item.categoria}|${item.marca}|${item.modelo}`;
+    const nombre = `${item.categoria} ${item.marca} ${item.modelo}${item.precio ? ` ($${item.precio})` : ""}`;
+    startTransition(async () => {
+      try {
+        await createRepuesto(nombre);
+        setAdded((prev) => new Set(prev).add(key));
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  }
 
   const categorias = [...new Set(data.map((i) => i.categoria))];
 
@@ -133,17 +149,21 @@ export function PriceList({ data }: { data: PriceItem[] }) {
               <th className="px-4 py-2.5 text-left font-medium">Marca</th>
               <th className="px-4 py-2.5 text-left font-medium">Modelo</th>
               <th className="px-4 py-2.5 text-right font-medium">Precio</th>
+              <th className="px-2 py-2.5 w-10"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-700">
             {shown.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500 text-sm">
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-500 text-sm">
                   Sin resultados{query ? ` para "${query}"` : ""}
                 </td>
               </tr>
             ) : (
-              shown.map((item, i) => (
+              shown.map((item, i) => {
+                const key = `${item.categoria}|${item.marca}|${item.modelo}`;
+                const isAdded = added.has(key);
+                return (
                 <tr key={i} className="card-hover">
                   <td className="px-4 py-2 text-gray-500 text-xs">{item.categoria}</td>
                   <td className="px-4 py-2 text-gray-400 text-xs">{item.marca}</td>
@@ -151,8 +171,23 @@ export function PriceList({ data }: { data: PriceItem[] }) {
                   <td className="px-4 py-2 text-right text-green-400 font-medium">
                     {item.precio ? `$${item.precio}` : "-"}
                   </td>
+                  <td className="px-2 py-2 text-center">
+                    <button
+                      onClick={() => !isAdded && handleAdd(item)}
+                      disabled={isAdded}
+                      title={isAdded ? "Agregado a lista de pedidos" : "Agregar a lista de pedidos"}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        isAdded
+                          ? "text-green-400 bg-green-400/10 cursor-default"
+                          : "text-gray-500 hover:text-brand-teal hover:bg-brand-teal/10"
+                      }`}
+                    >
+                      {isAdded ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                    </button>
+                  </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>

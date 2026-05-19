@@ -6,6 +6,7 @@ import { METODOS_PAGO } from "@/lib/constants";
 import { createOrder } from "@/lib/actions/orders";
 import { searchClients } from "@/lib/actions/clients";
 import { DeviceHistoryHint } from "@/components/device-history-hint";
+import { RepuestoSearchInput } from "@/components/repuesto-search-input";
 import {
   X,
   DollarSign,
@@ -352,11 +353,13 @@ export default function NuevaOrden() {
 
             <div>
               <label className="text-xs text-gray-400 mb-1 block">Repuesto necesario (opcional)</label>
-              <input
+              <RepuestoSearchInput
                 name="repuesto"
-                placeholder="Ej: Pin de carga Samsung A54"
-                className="w-full bg-surface-700 border border-surface-600 rounded-lg px-3 py-2.5 text-sm placeholder-gray-500"
+                placeholder="Buscar en lista de precios o escribir libre..."
               />
+              <p className="text-[0.65rem] text-gray-600 mt-1">
+                Buscá en la lista de BYTE o escribí cualquier cosa
+              </p>
             </div>
           </div>
         </div>

@@ -25,6 +25,19 @@ export interface PriceItem {
   precio: string;
 }
 
+export async function searchPriceList(query: string): Promise<PriceItem[]> {
+  const all = await fetchPriceList();
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const matches = all.filter(
+    (item) =>
+      item.modelo.toLowerCase().includes(q) ||
+      item.marca.toLowerCase().includes(q) ||
+      item.categoria.toLowerCase().includes(q)
+  );
+  return matches.slice(0, 20);
+}
+
 export async function fetchPriceList(): Promise<PriceItem[]> {
   try {
     const results = await Promise.all(
