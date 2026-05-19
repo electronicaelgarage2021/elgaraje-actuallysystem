@@ -45,6 +45,17 @@ export function ProveedoresBoard({
   const [cordoba, setCordoba] = useState(initialCordoba);
   const [vcp, setVcp] = useState(initialVcp);
 
+  // Sync local state when server data changes (e.g. after router.refresh)
+  useEffect(() => {
+    setSinAsignar(initialSinAsignar);
+  }, [initialSinAsignar]);
+  useEffect(() => {
+    setCordoba(initialCordoba);
+  }, [initialCordoba]);
+  useEffect(() => {
+    setVcp(initialVcp);
+  }, [initialVcp]);
+
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const dragRef = useRef<string | null>(null);
