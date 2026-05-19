@@ -17,9 +17,9 @@ export function PriceList({ data }: { data: PriceItem[] }) {
   function handleAdd(item: PriceItem) {
     const key = `${item.categoria}|${item.marca}|${item.modelo}`;
     const nombre = `${item.categoria} ${item.marca} ${item.modelo}${item.precio ? ` ($${item.precio})` : ""}`;
-    // Optimistic UI: mark as added instantly
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    // Optimistic UI: mark button as added instantly
     setAdded((prev) => new Set(prev).add(key));
-    // Reset button after 1.5s so user can add it again
     setTimeout(() => {
       setAdded((prev) => {
         const n = new Set(prev);
@@ -27,13 +27,22 @@ export function PriceList({ data }: { data: PriceItem[] }) {
         return n;
       });
     }, 1500);
-    // Fire-and-forget server call in background
+    // Notify ProveedoresBoard to add it to "Sin asignar" instantly
+    window.dispatchEvent(
+      new CustomEvent("repuesto-optimistic-add", {
+        detail: { id: tempId, nombre, proveedor: null, orden: null },
+      })
+    );
+    // Fire server call in background
     startTransition(async () => {
       try {
         await createRepuesto(nombre);
         router.refresh();
       } catch (e) {
         console.error("Error agregando repuesto:", e);
+        window.dispatchEvent(
+          new CustomEvent("repuesto-optimistic-remove", { detail: { id: tempId } })
+        );
         alert("Error al agregar repuesto, intentá de nuevo");
       }
     });

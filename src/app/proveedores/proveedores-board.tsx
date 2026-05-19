@@ -56,6 +56,24 @@ export function ProveedoresBoard({
     setVcp(initialVcp);
   }, [initialVcp]);
 
+  // Listen for optimistic adds from the price list (sibling component)
+  useEffect(() => {
+    function handleAdd(e: Event) {
+      const ev = e as CustomEvent<Repuesto>;
+      setSinAsignar((prev) => [...prev, ev.detail]);
+    }
+    function handleRemove(e: Event) {
+      const ev = e as CustomEvent<{ id: string }>;
+      setSinAsignar((prev) => prev.filter((r) => r.id !== ev.detail.id));
+    }
+    window.addEventListener("repuesto-optimistic-add", handleAdd);
+    window.addEventListener("repuesto-optimistic-remove", handleRemove);
+    return () => {
+      window.removeEventListener("repuesto-optimistic-add", handleAdd);
+      window.removeEventListener("repuesto-optimistic-remove", handleRemove);
+    };
+  }, []);
+
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const dragRef = useRef<string | null>(null);
