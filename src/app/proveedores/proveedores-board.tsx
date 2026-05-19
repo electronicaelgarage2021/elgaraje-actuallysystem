@@ -215,15 +215,29 @@ export function ProveedoresBoard({
   async function handleWhatsApp(proveedor: "cordoba" | "vcp") {
     const tel = proveedor === "cordoba" ? telCordoba : telVcp;
     const items = proveedor === "cordoba" ? cordoba : vcp;
-    if (!tel || items.length === 0) return;
+    if (!tel || items.length === 0) {
+      console.warn("WhatsApp: missing tel or no items", { tel, count: items.length });
+      return;
+    }
 
     const url = buildWaUrl(tel, buildMensaje(items));
-    window.open(url, "_blank");
+    // Use anchor click instead of window.open to avoid popup blockers
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
     // Mark as pedidos
     if (proveedor === "cordoba") setCordoba([]);
     else setVcp([]);
-    await markRepuestosPedidos(proveedor);
+    try {
+      await markRepuestosPedidos(proveedor);
+    } catch (e) {
+      console.error("Error marking as pedidos:", e);
+    }
   }
 
   return (
