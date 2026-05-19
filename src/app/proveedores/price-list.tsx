@@ -17,22 +17,24 @@ export function PriceList({ data }: { data: PriceItem[] }) {
   function handleAdd(item: PriceItem) {
     const key = `${item.categoria}|${item.marca}|${item.modelo}`;
     const nombre = `${item.categoria} ${item.marca} ${item.modelo}${item.precio ? ` ($${item.precio})` : ""}`;
+    // Optimistic UI: mark as added instantly
+    setAdded((prev) => new Set(prev).add(key));
+    // Reset button after 1.5s so user can add it again
+    setTimeout(() => {
+      setAdded((prev) => {
+        const n = new Set(prev);
+        n.delete(key);
+        return n;
+      });
+    }, 1500);
+    // Fire-and-forget server call in background
     startTransition(async () => {
       try {
         await createRepuesto(nombre);
-        setAdded((prev) => new Set(prev).add(key));
         router.refresh();
-        // Reset button after 1.5s so user can add the same item again
-        setTimeout(() => {
-          setAdded((prev) => {
-            const n = new Set(prev);
-            n.delete(key);
-            return n;
-          });
-        }, 1500);
       } catch (e) {
         console.error("Error agregando repuesto:", e);
-        alert("Error al agregar repuesto");
+        alert("Error al agregar repuesto, intentá de nuevo");
       }
     });
   }
