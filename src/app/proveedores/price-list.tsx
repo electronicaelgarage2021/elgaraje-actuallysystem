@@ -164,14 +164,20 @@ export function PriceList({ data }: { data: PriceItem[] }) {
         </div>
       )}
 
-      <div className="overflow-x-auto" style={{ maxHeight: "450px", overflowY: "auto" }}>
-        <table className="w-full text-sm">
+      <div style={{ maxHeight: "450px", overflowY: "auto" }}>
+        <table className="w-full text-sm table-fixed">
+          <colgroup>
+            <col className="w-[22%]" />
+            <col />
+            <col className="w-[22%]" />
+            <col className="w-[36px]" />
+          </colgroup>
           <thead className="sticky top-0 bg-surface-800 z-10">
             <tr className="border-b border-surface-600 text-gray-400 text-xs uppercase tracking-wider">
               <th className="px-3 py-2.5 text-left font-medium">Marca</th>
               <th className="px-3 py-2.5 text-left font-medium">Modelo</th>
-              <th className="px-3 py-2.5 text-right font-medium">Precio</th>
-              <th className="px-1 py-2.5 w-8"></th>
+              <th className="px-2 py-2.5 text-right font-medium">Precio</th>
+              <th className="px-1 py-2.5"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-700">
@@ -187,12 +193,12 @@ export function PriceList({ data }: { data: PriceItem[] }) {
                 const isAdded = added.has(key);
                 return (
                 <tr key={i} className="card-hover">
-                  <td className="px-3 py-2 text-gray-400 text-xs whitespace-nowrap">{item.marca}</td>
+                  <td className="px-3 py-2 text-gray-400 text-xs truncate">{item.marca}</td>
                   <td className="px-3 py-2 text-sm">
-                    <div className="truncate max-w-[200px] lg:max-w-[180px] xl:max-w-[260px]">{item.modelo}</div>
-                    <div className="text-[0.6rem] text-gray-600">{item.categoria}</div>
+                    <div className="truncate">{item.modelo}</div>
+                    <div className="text-[0.6rem] text-gray-600 truncate">{item.categoria}</div>
                   </td>
-                  <td className="px-3 py-2 text-right text-green-400 font-medium whitespace-nowrap">
+                  <td className="px-2 py-2 text-right text-green-400 font-medium text-xs whitespace-nowrap">
                     {item.precio ? `$${item.precio}` : "-"}
                   </td>
                   <td className="px-1 py-2 text-center">
