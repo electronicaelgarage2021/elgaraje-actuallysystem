@@ -22,6 +22,14 @@ export function PriceList({ data }: { data: PriceItem[] }) {
         await createRepuesto(nombre);
         setAdded((prev) => new Set(prev).add(key));
         router.refresh();
+        // Reset button after 1.5s so user can add the same item again
+        setTimeout(() => {
+          setAdded((prev) => {
+            const n = new Set(prev);
+            n.delete(key);
+            return n;
+          });
+        }, 1500);
       } catch (e) {
         console.error("Error agregando repuesto:", e);
         alert("Error al agregar repuesto");
@@ -177,12 +185,11 @@ export function PriceList({ data }: { data: PriceItem[] }) {
                   </td>
                   <td className="px-2 py-2 text-center">
                     <button
-                      onClick={() => !isAdded && handleAdd(item)}
-                      disabled={isAdded}
-                      title={isAdded ? "Agregado a lista de pedidos" : "Agregar a lista de pedidos"}
+                      onClick={() => handleAdd(item)}
+                      title={isAdded ? "¡Agregado!" : "Agregar a lista de pedidos"}
                       className={`p-1.5 rounded-lg transition-colors ${
                         isAdded
-                          ? "text-green-400 bg-green-400/10 cursor-default"
+                          ? "text-green-400 bg-green-400/10"
                           : "text-gray-500 hover:text-brand-teal hover:bg-brand-teal/10"
                       }`}
                     >

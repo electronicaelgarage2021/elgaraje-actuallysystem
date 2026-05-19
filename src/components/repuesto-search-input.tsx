@@ -9,9 +9,10 @@ interface Props {
   name: string;
   placeholder?: string;
   defaultValue?: string;
+  onChange?: (value: string) => void;
 }
 
-export function RepuestoSearchInput({ name, placeholder, defaultValue = "" }: Props) {
+export function RepuestoSearchInput({ name, placeholder, defaultValue = "", onChange }: Props) {
   const [value, setValue] = useState(defaultValue);
   const [results, setResults] = useState<PriceItem[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -48,6 +49,7 @@ export function RepuestoSearchInput({ name, placeholder, defaultValue = "" }: Pr
   function pick(item: PriceItem) {
     const text = `${item.categoria} ${item.marca} ${item.modelo}${item.precio ? ` ($${item.precio})` : ""}`;
     setValue(text);
+    onChange?.(text);
     setShowResults(false);
   }
 
@@ -61,6 +63,7 @@ export function RepuestoSearchInput({ name, placeholder, defaultValue = "" }: Pr
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
+            onChange?.(e.target.value);
             setShowResults(true);
           }}
           onFocus={() => setShowResults(true)}

@@ -112,10 +112,22 @@ export async function createOrder(formData: FormData) {
     });
   }
 
-  const repuesto = formData.get("repuesto") as string;
-  if (repuesto && repuesto.trim()) {
-    const { createRepuesto } = await import("./repuestos");
-    await createRepuesto(repuesto.trim(), orden.id);
+  // Support both single repuesto (legacy) and multi-repuesto via JSON
+  const repuestosJson = formData.get("repuestos_json") as string;
+  if (repuestosJson) {
+    try {
+      const arr = JSON.parse(repuestosJson) as string[];
+      const { createRepuesto } = await import("./repuestos");
+      for (const r of arr) {
+        if (r && r.trim()) await createRepuesto(r.trim(), orden.id);
+      }
+    } catch {}
+  } else {
+    const repuesto = formData.get("repuesto") as string;
+    if (repuesto && repuesto.trim()) {
+      const { createRepuesto } = await import("./repuestos");
+      await createRepuesto(repuesto.trim(), orden.id);
+    }
   }
 
   revalidatePath("/");

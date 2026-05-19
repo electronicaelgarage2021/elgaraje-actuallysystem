@@ -6,7 +6,7 @@ import { METODOS_PAGO } from "@/lib/constants";
 import { createOrder } from "@/lib/actions/orders";
 import { searchClients } from "@/lib/actions/clients";
 import { DeviceHistoryHint } from "@/components/device-history-hint";
-import { RepuestoSearchInput } from "@/components/repuesto-search-input";
+import { RepuestosListInput } from "@/components/repuestos-list-input";
 import {
   X,
   DollarSign,
@@ -352,13 +352,10 @@ export default function NuevaOrden() {
             </div>
 
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Repuesto necesario (opcional)</label>
-              <RepuestoSearchInput
-                name="repuesto"
-                placeholder="Buscar en lista de precios o escribir libre..."
-              />
+              <label className="text-xs text-gray-400 mb-1 block">Repuestos necesarios (opcional)</label>
+              <RepuestosListInput name="repuestos_json" />
               <p className="text-[0.65rem] text-gray-600 mt-1">
-                Buscá en la lista de BYTE o escribí cualquier cosa
+                Buscá en la lista de BYTE o escribí libre. Podés agregar varios.
               </p>
             </div>
           </div>
