@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Search, ExternalLink, RefreshCw, Plus, Check } from "lucide-react";
 import type { PriceItem } from "@/lib/actions/price-list";
 import { createRepuesto } from "@/lib/actions/repuestos";
 
 export function PriceList({ data }: { data: PriceItem[] }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [filterCategoria, setFilterCategoria] = useState("");
   const [filterMarca, setFilterMarca] = useState("");
@@ -19,8 +21,10 @@ export function PriceList({ data }: { data: PriceItem[] }) {
       try {
         await createRepuesto(nombre);
         setAdded((prev) => new Set(prev).add(key));
+        router.refresh();
       } catch (e) {
-        console.error(e);
+        console.error("Error agregando repuesto:", e);
+        alert("Error al agregar repuesto");
       }
     });
   }
