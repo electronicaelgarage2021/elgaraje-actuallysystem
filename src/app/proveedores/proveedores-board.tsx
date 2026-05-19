@@ -212,25 +212,13 @@ export function ProveedoresBoard({
     return `Hola, ¿como estas? Te paso la lista de repuestos que necesito:\n\n${lista}\n\nAvisame disponibilidad y precio. Gracias!`;
   }
 
-  async function handleWhatsApp(proveedor: "cordoba" | "vcp") {
-    const tel = proveedor === "cordoba" ? telCordoba : telVcp;
-    const items = proveedor === "cordoba" ? cordoba : vcp;
-    if (!tel || items.length === 0) {
-      console.warn("WhatsApp: missing tel or no items", { tel, count: items.length });
-      return;
-    }
+  // Pre-compute WhatsApp URLs so the link can be rendered as a real <a>
+  const waUrlCordoba =
+    telCordoba && cordoba.length > 0 ? buildWaUrl(telCordoba, buildMensaje(cordoba)) : "";
+  const waUrlVcp = telVcp && vcp.length > 0 ? buildWaUrl(telVcp, buildMensaje(vcp)) : "";
 
-    const url = buildWaUrl(tel, buildMensaje(items));
-    // Use anchor click instead of window.open to avoid popup blockers
-    const a = document.createElement("a");
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // Mark as pedidos
+  async function handleWhatsAppMarkPedidos(proveedor: "cordoba" | "vcp") {
+    // Optimistic clear (link already opened via real <a> navigation)
     if (proveedor === "cordoba") setCordoba([]);
     else setVcp([]);
     try {
@@ -335,7 +323,8 @@ export function ProveedoresBoard({
         }}
         onDelete={handleDelete}
         onAssignAll={() => handleAssignAll("cordoba")}
-        onWhatsApp={() => handleWhatsApp("cordoba")}
+        waUrl={waUrlCordoba}
+        onWhatsAppClick={() => handleWhatsAppMarkPedidos("cordoba")}
         sinAsignarCount={sinAsignar.length}
       />
 
@@ -363,7 +352,8 @@ export function ProveedoresBoard({
         }}
         onDelete={handleDelete}
         onAssignAll={() => handleAssignAll("vcp")}
-        onWhatsApp={() => handleWhatsApp("vcp")}
+        waUrl={waUrlVcp}
+        onWhatsAppClick={() => handleWhatsAppMarkPedidos("vcp")}
         sinAsignarCount={sinAsignar.length}
       />
     </div>
@@ -439,7 +429,8 @@ function ProveedorColumn({
   onDragEnd,
   onDelete,
   onAssignAll,
-  onWhatsApp,
+  waUrl,
+  onWhatsAppClick,
   sinAsignarCount,
 }: {
   id: string;
@@ -460,7 +451,8 @@ function ProveedorColumn({
   onDragEnd: () => void;
   onDelete: (id: string) => void;
   onAssignAll: () => void;
-  onWhatsApp: () => void;
+  waUrl: string;
+  onWhatsAppClick: () => void;
   sinAsignarCount: number;
 }) {
   const isOver = dragOverCol === id;
@@ -510,14 +502,26 @@ function ProveedorColumn({
               Agregar todos
             </button>
           )}
-          <button
-            onClick={onWhatsApp}
-            disabled={items.length === 0 || !telefono}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors disabled:opacity-40 ml-auto"
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            Enviar por WhatsApp
-          </button>
+          {waUrl ? (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onWhatsAppClick}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors ml-auto"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Enviar por WhatsApp
+            </a>
+          ) : (
+            <button
+              disabled
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 text-white opacity-40 ml-auto cursor-not-allowed"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Enviar por WhatsApp
+            </button>
+          )}
         </div>
       </div>
 
