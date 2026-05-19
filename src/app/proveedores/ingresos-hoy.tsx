@@ -40,17 +40,17 @@ export function IngresosHoy({ data }: { data: IngresoHoy[] }) {
 
   return (
     <div className="bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-surface-600 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-brand-teal" />
-            Ingresos del día
-          </h2>
-          <p className="text-[0.65rem] text-gray-500 capitalize mt-0.5">{hoy}</p>
+      <div className="px-5 py-3 border-b border-surface-600 flex items-center justify-between gap-2 min-h-[3.25rem]">
+        <h2 className="text-sm font-semibold flex items-center gap-2 shrink-0">
+          <Calendar className="w-3.5 h-3.5 text-brand-teal" />
+          Ingresos del día
+        </h2>
+        <div className="flex items-center gap-2">
+          <span className="text-[0.65rem] text-gray-500 capitalize hidden md:inline">{hoy}</span>
+          <span className="text-[0.65rem] text-gray-500 font-medium bg-surface-700 px-2 py-0.5 rounded">
+            {data.length}
+          </span>
         </div>
-        <span className="text-[0.65rem] text-gray-500 font-medium bg-surface-700 px-2 py-0.5 rounded">
-          {data.length}
-        </span>
       </div>
 
       <div style={{ maxHeight: "508px", overflowY: "auto" }}>

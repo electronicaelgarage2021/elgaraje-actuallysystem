@@ -79,7 +79,7 @@ export function PriceList({ data }: { data: PriceItem[] }) {
 
   return (
     <div className="mt-6 bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-surface-600 flex flex-col md:flex-row md:items-center justify-between gap-2">
+      <div className="px-5 py-3 border-b border-surface-600 flex flex-col md:flex-row md:items-center justify-between gap-2 min-h-[3.25rem]">
         <h2 className="text-sm font-semibold shrink-0">Lista de Precios — BYTE CBA</h2>
         <div className="flex items-center gap-2">
           <div className="relative">
