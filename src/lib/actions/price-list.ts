@@ -63,12 +63,18 @@ function isPriceWord(s: string): boolean {
   return u === "PRECIO" || u.startsWith("PRECIO ") || u === "MAYORISTA" || u === "PVP";
 }
 
+function looksLikePrice(s: string): boolean {
+  const cleaned = s.replace(/[$.\s]/g, "");
+  return /^\d+$/.test(cleaned);
+}
+
+function isHeaderKeyword(upper: string): boolean {
+  return upper === "PRECIO" || upper === "MAYORISTA" || upper === "PVP"
+    || upper.startsWith("PRECIO ") || upper.includes("LISTA DE PRECIOS");
+}
+
 function cleanBrand(rawCell: string, tabUpper: string): string {
-  // Strip title prefix variants:
-  //  "LISTA DE PRECIOS BYTE REPUESTOS, CONSULTAR STOCK SAMSUNG"
-  //  "LISTA DE PRECIOS (CONSULTAR STOCK)                         MARCOS SAMSUNG"
   let brandName = rawCell.replace(/^LISTA DE PRECIOS.*?STOCK[)\s]+/i, "").trim();
-  // Strip category prefix (tab name)
   if (brandName.toUpperCase().startsWith(tabUpper + " ")) {
     brandName = brandName.slice(tabUpper.length).trim();
   }
@@ -81,38 +87,65 @@ function extractProducts(rows: string[][], categoria: string): PriceItem[] {
   const items: PriceItem[] = [];
   const tabUpper = categoria.toUpperCase();
 
-  // Scan ALL rows for header rows (containing brand names followed by PRECIO)
   let currentBrands: { name: string; modelCol: number; priceCol: number }[] = [];
 
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r];
 
-    // PASS 1: explicit header with PRECIO at +1 or +2 (handles MOTOROLA gap in PLACAS DE CARGA)
+    // PASS 1: explicit header with PRECIO at +1 or +2
     const possibleBrands: { name: string; modelCol: number; priceCol: number }[] = [];
     for (let i = 0; i < row.length - 1; i++) {
       const rawCell = row[i]?.trim() || "";
       if (!rawCell) continue;
-      // Accept PRECIO at col+1 OR col+2 (skip 1 empty col)
+      const upper = rawCell.toUpperCase();
+
       const next1 = row[i + 1]?.trim() || "";
       const next2 = row[i + 2]?.trim() || "";
+
+      // "MODELO" headers: peek at next row for brand name
+      if (upper === "MODELO" && isPriceWord(next1)) {
+        const nextRow = rows[r + 1];
+        if (nextRow) {
+          const brandBelow = nextRow[i]?.trim() || "";
+          const brandUpper = brandBelow.toUpperCase();
+          if (brandBelow && !isHeaderKeyword(brandUpper) && brandUpper !== "MODELO" && !/\d/.test(brandBelow)) {
+            possibleBrands.push({ name: brandBelow, modelCol: i, priceCol: i + 1 });
+          }
+        }
+        continue;
+      }
+
+      // Headers ending in "MODELO" (e.g. "FPC MODELO", "BANDEJA SIM MODELO"):
+      // scan up to +5 for PRECIO since there may be extra columns (PINES, TIPO, etc.)
+      if (upper.endsWith(" MODELO") || upper.endsWith(" MODELO ")) {
+        let foundPrecio = false;
+        for (let off = 1; off <= 5; off++) {
+          if (isPriceWord(row[i + off]?.trim() || "")) { foundPrecio = true; break; }
+        }
+        if (foundPrecio) {
+          const cleanedName = cleanBrand(rawCell, tabUpper).replace(/\s+MODELO$/i, "").trim();
+          if (cleanedName && !isHeaderKeyword(cleanedName.toUpperCase())) {
+            possibleBrands.push({ name: cleanedName, modelCol: i, priceCol: i + 1 });
+          }
+        }
+        continue;
+      }
+
+      // Standard: PRECIO at +1, or +2 if +1 is empty
       let hasPriceHeader = false;
       if (isPriceWord(next1)) hasPriceHeader = true;
       else if (!next1 && next2 && isPriceWord(next2)) hasPriceHeader = true;
       if (!hasPriceHeader) continue;
 
       const brandName = cleanBrand(rawCell, tabUpper);
-      const upper = brandName.toUpperCase();
+      const brandUpper = brandName.toUpperCase();
       if (!brandName) continue;
-      if (upper === "PRECIO" || upper === "MODELO" || upper === "MAYORISTA" || upper === "PVP") continue;
-      if (upper.startsWith("PRECIO ")) continue;
-      if (upper.includes("LISTA DE PRECIOS")) continue;
+      if (isHeaderKeyword(brandUpper) || brandUpper === "MODELO") continue;
 
-      // Price col always = modelCol + 1 (data rows have model then price)
       possibleBrands.push({ name: brandName, modelCol: i, priceCol: i + 1 });
     }
 
-    // PASS 2: brand-only sub-headers (like CAMARAS row 66 with SAMSUNG, MOTOROLA, ...
-    // but no "PRECIO" label). Only fire if the row contains NO numeric cells.
+    // PASS 2: brand-only sub-headers (no PRECIO label, no digits)
     if (possibleBrands.length === 0 && currentBrands.length > 0) {
       const digitCellCount = row.filter((c) => /\d/.test(c?.trim() || "")).length;
       if (digitCellCount === 0) {
@@ -121,9 +154,7 @@ function extractProducts(rows: string[][], categoria: string): PriceItem[] {
           const rawCell = row[i]?.trim() || "";
           if (!rawCell) continue;
           const upper = rawCell.toUpperCase();
-          if (upper === "PRECIO" || upper === "MODELO" || upper === "MAYORISTA" || upper === "PVP") continue;
-          if (upper.startsWith("PRECIO ")) continue;
-          if (upper.includes("LISTA DE PRECIOS")) continue;
+          if (isHeaderKeyword(upper) || upper === "MODELO") continue;
           textCells.push({ name: cleanBrand(rawCell, tabUpper), col: i });
         }
         if (textCells.length >= 3) {
@@ -141,7 +172,6 @@ function extractProducts(rows: string[][], categoria: string): PriceItem[] {
     }
 
     if (possibleBrands.length > 0) {
-      // Merge new headers into current mapping: replace by column, keep others
       const updatedBrands = [...currentBrands];
       for (const nb of possibleBrands) {
         const idx = updatedBrands.findIndex((b) => b.modelCol === nb.modelCol);
@@ -152,22 +182,21 @@ function extractProducts(rows: string[][], categoria: string): PriceItem[] {
       continue;
     }
 
-    // Otherwise, treat as data row using current brand mapping
+    // Data row: extract products using current brand mapping
     if (currentBrands.length === 0) continue;
     for (const brand of currentBrands) {
       const modelo = row[brand.modelCol]?.trim() || "";
-      let precio = row[brand.priceCol]?.trim() || "";
-      // If price column has non-numeric value (e.g. "MARCO" type label),
-      // scan next 2 columns to find a numeric price
-      if (precio && !/\d/.test(precio)) {
-        for (let offset = 1; offset <= 2; offset++) {
-          const alt = row[brand.priceCol + offset]?.trim() || "";
-          if (/\d/.test(alt)) { precio = alt; break; }
-        }
-      }
       if (!modelo) continue;
       const modeloUpper = modelo.toUpperCase();
-      if (modeloUpper === "PRECIO" || modeloUpper === "MODELO") continue;
+      if (modeloUpper === "PRECIO" || modeloUpper === "MODELO" || isPriceWord(modelo)) continue;
+
+      // Find price: scan from priceCol up to +3 cols for a numeric value
+      let precio = "";
+      for (let off = 0; off <= 3; off++) {
+        const candidate = row[brand.priceCol + off]?.trim() || "";
+        if (candidate && looksLikePrice(candidate)) { precio = candidate; break; }
+      }
+
       // Skip sub-section headers: pure text (no digits) AND no price
       if (!precio && !/\d/.test(modelo)) continue;
       items.push({ categoria, marca: brand.name, modelo, precio });
