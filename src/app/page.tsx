@@ -9,6 +9,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DashboardEntregarBtn } from "@/components/dashboard-entregar-btn";
+import { DashboardReparacionBtn } from "@/components/dashboard-reparacion-btn";
 import { ExportButton } from "@/components/export-button";
 import { DashboardMonthly } from "@/components/dashboard-monthly";
 import { buildWhatsAppUrl } from "@/lib/constants";
@@ -177,18 +178,21 @@ export default async function Dashboard() {
                 <Link
                   key={orden.id}
                   href={`/ordenes/${orden.id}`}
-                  className="px-5 py-3 card-hover cursor-pointer block"
+                  className="px-5 py-3 card-hover cursor-pointer flex items-center justify-between block"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 font-mono">#{orden.numero}</span>
-                      <span className="text-sm font-medium ml-2">{orden.dispositivo}</span>
+                      <span className="text-sm font-medium">{orden.dispositivo}</span>
+                      <EstadoBadge estado={orden.estado} />
                     </div>
-                    <EstadoBadge estado={orden.estado} />
+                    <div className="text-xs text-gray-400 mt-1">
+                      {orden.problema} - {orden.cliente?.nombre}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {orden.problema} - {orden.cliente?.nombre}
-                  </div>
+                  {orden.estado === "recibido" && (
+                    <DashboardReparacionBtn ordenId={orden.id} />
+                  )}
                 </Link>
               ))
             )}
