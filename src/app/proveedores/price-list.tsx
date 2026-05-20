@@ -1,25 +1,51 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ExternalLink, RefreshCw, Plus, Check } from "lucide-react";
+import { Search, ExternalLink, RefreshCw, Plus, Check, Link2 } from "lucide-react";
 import type { PriceItem } from "@/lib/actions/price-list";
 import { createRepuesto } from "@/lib/actions/repuestos";
 
-export function PriceList({ data }: { data: PriceItem[] }) {
+interface OrdenActiva {
+  id: string;
+  numero: number;
+  dispositivo: string;
+  cliente: { nombre: string } | { nombre: string }[] | null;
+}
+
+function getClienteName(c: OrdenActiva["cliente"]): string {
+  if (!c) return "";
+  if (Array.isArray(c)) return c[0]?.nombre || "";
+  return c.nombre;
+}
+
+export function PriceList({ data, ordenesActivas }: { data: PriceItem[]; ordenesActivas: OrdenActiva[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [filterCategoria, setFilterCategoria] = useState("");
   const [filterMarca, setFilterMarca] = useState("");
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [, startTransition] = useTransition();
+  const [popupItem, setPopupItem] = useState<{ item: PriceItem; rowIdx: number } | null>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
-  function handleAdd(item: PriceItem) {
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setPopupItem(null);
+      }
+    }
+    if (popupItem) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [popupItem]);
+
+  function handleAdd(item: PriceItem, ordenId?: string, ordenInfo?: { numero: number; dispositivo: string }) {
     const key = `${item.categoria}|${item.marca}|${item.modelo}`;
     const nombre = `${item.categoria} ${item.marca} ${item.modelo}${item.precio ? ` ($${item.precio})` : ""}`;
     const tempId = `temp-${Date.now()}-${Math.random()}`;
-    // Optimistic UI: mark button as added instantly
+    const precio = item.precio ? Number(item.precio.replace(/[^0-9]/g, "")) : undefined;
     setAdded((prev) => new Set(prev).add(key));
+    setPopupItem(null);
     setTimeout(() => {
       setAdded((prev) => {
         const n = new Set(prev);
@@ -27,16 +53,19 @@ export function PriceList({ data }: { data: PriceItem[] }) {
         return n;
       });
     }, 1500);
-    // Notify ProveedoresBoard to add it to "Sin asignar" instantly
     window.dispatchEvent(
       new CustomEvent("repuesto-optimistic-add", {
-        detail: { id: tempId, nombre, proveedor: null, orden: null },
+        detail: {
+          id: tempId,
+          nombre,
+          proveedor: null,
+          orden: ordenInfo ? { numero: ordenInfo.numero, dispositivo: ordenInfo.dispositivo } : null,
+        },
       })
     );
-    // Fire server call in background
     startTransition(async () => {
       try {
-        await createRepuesto(nombre);
+        await createRepuesto(nombre, ordenId, precio);
         router.refresh();
       } catch (e) {
         console.error("Error agregando repuesto:", e);
@@ -191,8 +220,9 @@ export function PriceList({ data }: { data: PriceItem[] }) {
               shown.map((item, i) => {
                 const key = `${item.categoria}|${item.marca}|${item.modelo}`;
                 const isAdded = added.has(key);
+                const isPopupOpen = popupItem?.rowIdx === i;
                 return (
-                <tr key={i} className="card-hover">
+                <tr key={i} className="card-hover relative">
                   <td className="px-3 py-2 text-gray-400 text-xs truncate">{item.marca}</td>
                   <td className="px-3 py-2 text-sm">
                     <div className="truncate">{item.modelo}</div>
@@ -201,10 +231,16 @@ export function PriceList({ data }: { data: PriceItem[] }) {
                   <td className="px-2 py-2 text-right text-green-400 font-medium text-xs whitespace-nowrap">
                     {item.precio ? `$${item.precio}` : "-"}
                   </td>
-                  <td className="px-1 py-2 text-center">
+                  <td className="px-1 py-2 text-center relative">
                     <button
-                      onClick={() => handleAdd(item)}
-                      title={isAdded ? "¡Agregado!" : "Agregar a lista de pedidos"}
+                      onClick={() => {
+                        if (ordenesActivas.length === 0) {
+                          handleAdd(item);
+                        } else {
+                          setPopupItem(isPopupOpen ? null : { item, rowIdx: i });
+                        }
+                      }}
+                      title={isAdded ? "¡Agregado!" : "Agregar repuesto"}
                       className={`p-1.5 rounded-lg transition-colors ${
                         isAdded
                           ? "text-green-400 bg-green-400/10"
@@ -213,6 +249,43 @@ export function PriceList({ data }: { data: PriceItem[] }) {
                     >
                       {isAdded ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                     </button>
+                    {isPopupOpen && (
+                      <div
+                        ref={popupRef}
+                        className="absolute right-0 top-full mt-1 z-50 bg-surface-700 border border-surface-600 rounded-lg shadow-xl w-64 overflow-hidden"
+                      >
+                        <div className="px-3 py-2 border-b border-surface-600 text-[0.65rem] text-gray-400 font-medium">
+                          Vincular a orden
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          <button
+                            onClick={() => handleAdd(item)}
+                            className="w-full px-3 py-2 text-left hover:bg-surface-600 transition-colors flex items-center gap-2"
+                          >
+                            <Plus className="w-3 h-3 text-gray-500 shrink-0" />
+                            <span className="text-xs text-gray-300">Sin asignar a orden</span>
+                          </button>
+                          {ordenesActivas.map((o) => (
+                            <button
+                              key={o.id}
+                              onClick={() => handleAdd(item, o.id, { numero: o.numero, dispositivo: o.dispositivo })}
+                              className="w-full px-3 py-2 text-left hover:bg-surface-600 transition-colors flex items-center gap-2"
+                            >
+                              <Link2 className="w-3 h-3 text-brand-teal shrink-0" />
+                              <div className="min-w-0">
+                                <div className="text-xs text-gray-200 truncate">
+                                  <span className="text-gray-500 font-mono">#{o.numero}</span>{" "}
+                                  {o.dispositivo}
+                                </div>
+                                <div className="text-[0.6rem] text-gray-500 truncate">
+                                  {getClienteName(o.cliente)}
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
                 );

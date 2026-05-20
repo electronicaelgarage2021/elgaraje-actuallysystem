@@ -14,14 +14,27 @@ export async function getRepuestosPendientes() {
   return data || [];
 }
 
-export async function createRepuesto(nombre: string, ordenId?: string) {
+export async function createRepuesto(nombre: string, ordenId?: string, precio?: number) {
   const db = createSupabaseServer();
-  const { error } = await db.from("repuestos").insert({
+  const insert: Record<string, unknown> = {
     nombre,
     orden_id: ordenId || null,
-  });
+  };
+  if (precio) insert.precio = precio;
+  const { error } = await db.from("repuestos").insert(insert);
   if (error) throw error;
   revalidatePath("/proveedores");
+}
+
+export async function getOrdenesActivas() {
+  const db = createSupabaseServer();
+  const { data, error } = await db
+    .from("ordenes_reparacion")
+    .select("id, numero, dispositivo, cliente:clientes(nombre)")
+    .in("estado", ["recibido", "en_reparacion"])
+    .order("fecha_ingreso", { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function assignRepuesto(id: string, proveedor: "cordoba" | "vcp" | null) {
