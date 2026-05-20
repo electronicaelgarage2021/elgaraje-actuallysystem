@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Banknote, CreditCard, ArrowLeftRight, ShoppingBag, Wrench, Package, Receipt } from "lucide-react";
+import { Banknote, CreditCard, ArrowLeftRight, ShoppingBag, Wrench, Package, Receipt, Trash2 } from "lucide-react";
+import { deletePagoCaja } from "@/lib/actions/orders";
+import { deleteVenta } from "@/lib/actions/ventas";
+import { deleteGasto } from "@/lib/actions/gastos";
 
 const METODO_ICONS: Record<string, { icon: typeof Banknote; color: string }> = {
   efectivo: { icon: Banknote, color: "text-green-400" },
@@ -50,9 +54,31 @@ export function CajaMovimientos({
   movimientos: Movimiento[];
   isRange: boolean;
 }) {
+  const router = useRouter();
   const [filter, setFilter] = useState<FilterType>("todos");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const filtered = movimientos.filter((m) => matchesFilter(m, filter));
+
+  function handleDelete(mov: Movimiento) {
+    const label = mov.type === "pago" ? "este pago" : mov.type === "venta" ? "esta venta" : "este gasto";
+    if (!confirm(`¿Eliminar ${label} de $${mov.monto.toLocaleString("es-AR")}?`)) return;
+
+    setDeletingId(mov.id);
+    startTransition(async () => {
+      try {
+        if (mov.type === "pago") await deletePagoCaja(mov.id);
+        else if (mov.type === "venta") await deleteVenta(mov.id);
+        else if (mov.type === "gasto") await deleteGasto(mov.id);
+        router.refresh();
+      } catch {
+        alert("Error al eliminar");
+      } finally {
+        setDeletingId(null);
+      }
+    });
+  }
 
   return (
     <div className="bg-surface-800 border border-surface-600 rounded-xl overflow-hidden">
@@ -84,10 +110,11 @@ export function CajaMovimientos({
         <div className="divide-y divide-surface-700">
           {filtered.map((mov) => {
             const config = METODO_ICONS[mov.metodo] || METODO_ICONS.efectivo;
+            const isDeleting = deletingId === mov.id;
 
             if (mov.type === "gasto") {
               return (
-                <div key={`gasto-${mov.id}`} className="px-5 py-3 flex items-center justify-between card-hover">
+                <div key={`gasto-${mov.id}`} className={`px-5 py-3 flex items-center justify-between card-hover group ${isDeleting ? "opacity-40" : ""}`}>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 bg-surface-700">
                       <Receipt className="w-4 h-4" />
@@ -103,15 +130,24 @@ export function CajaMovimientos({
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-red-400">
-                      -${mov.monto.toLocaleString("es-AR")}
-                    </p>
-                    <p className="text-[0.65rem] text-gray-500">
-                      {isRange
-                        ? format(new Date(mov.created_at), "d MMM, HH:mm", { locale: es })
-                        : format(new Date(mov.created_at), "HH:mm", { locale: es })}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-red-400">
+                        -${mov.monto.toLocaleString("es-AR")}
+                      </p>
+                      <p className="text-[0.65rem] text-gray-500">
+                        {isRange
+                          ? format(new Date(mov.created_at), "d MMM, HH:mm", { locale: es })
+                          : format(new Date(mov.created_at), "HH:mm", { locale: es })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(mov)}
+                      disabled={isPending}
+                      className="p-1.5 rounded-lg text-gray-600 hover:text-brand-red hover:bg-brand-red/10 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               );
@@ -119,7 +155,7 @@ export function CajaMovimientos({
 
             if (mov.type === "venta") {
               return (
-                <div key={`venta-${mov.id}`} className="px-5 py-3 flex items-center justify-between card-hover">
+                <div key={`venta-${mov.id}`} className={`px-5 py-3 flex items-center justify-between card-hover group ${isDeleting ? "opacity-40" : ""}`}>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center text-amber-400 bg-surface-700">
                       <ShoppingBag className="w-4 h-4" />
@@ -135,15 +171,24 @@ export function CajaMovimientos({
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-green-400">
-                      +${mov.monto.toLocaleString("es-AR")}
-                    </p>
-                    <p className="text-[0.65rem] text-gray-500">
-                      {isRange
-                        ? format(new Date(mov.created_at), "d MMM, HH:mm", { locale: es })
-                        : format(new Date(mov.created_at), "HH:mm", { locale: es })}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-green-400">
+                        +${mov.monto.toLocaleString("es-AR")}
+                      </p>
+                      <p className="text-[0.65rem] text-gray-500">
+                        {isRange
+                          ? format(new Date(mov.created_at), "d MMM, HH:mm", { locale: es })
+                          : format(new Date(mov.created_at), "HH:mm", { locale: es })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(mov)}
+                      disabled={isPending}
+                      className="p-1.5 rounded-lg text-gray-600 hover:text-brand-red hover:bg-brand-red/10 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               );
@@ -151,7 +196,7 @@ export function CajaMovimientos({
 
             const Icon = config.icon;
             return (
-              <div key={`pago-${mov.id}`} className="px-5 py-3 flex items-center justify-between card-hover">
+              <div key={`pago-${mov.id}`} className={`px-5 py-3 flex items-center justify-between card-hover group ${isDeleting ? "opacity-40" : ""}`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.color} bg-surface-700`}>
                     <Icon className="w-4 h-4" />
@@ -165,15 +210,24 @@ export function CajaMovimientos({
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-green-400">
-                    +${mov.monto.toLocaleString("es-AR")}
-                  </p>
-                  <p className="text-[0.65rem] text-gray-500">
-                    {isRange
-                      ? format(new Date(mov.created_at), "d MMM, HH:mm", { locale: es })
-                      : format(new Date(mov.created_at), "HH:mm", { locale: es })}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-green-400">
+                      +${mov.monto.toLocaleString("es-AR")}
+                    </p>
+                    <p className="text-[0.65rem] text-gray-500">
+                      {isRange
+                        ? format(new Date(mov.created_at), "d MMM, HH:mm", { locale: es })
+                        : format(new Date(mov.created_at), "HH:mm", { locale: es })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(mov)}
+                    disabled={isPending}
+                    className="p-1.5 rounded-lg text-gray-600 hover:text-brand-red hover:bg-brand-red/10 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             );

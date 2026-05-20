@@ -21,6 +21,13 @@ export async function createGasto(formData: FormData) {
   revalidatePath("/caja");
 }
 
+export async function deleteGasto(id: string) {
+  const db = createSupabaseServer();
+  const { error } = await db.from("gastos").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath("/caja");
+}
+
 export async function getDailyGastos(fecha?: string, fechaHasta?: string) {
   const db = createSupabaseServer();
   const desde = fecha || new Date().toISOString().split("T")[0];

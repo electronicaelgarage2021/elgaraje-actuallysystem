@@ -46,6 +46,7 @@ export async function deleteVenta(id: string) {
 
   if (error) throw error;
   revalidatePath("/ventas");
+  revalidatePath("/caja");
 }
 
 export async function getVentasStats(desde?: string, hasta?: string) {

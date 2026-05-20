@@ -230,10 +230,9 @@ export default function NuevaOrden() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Teléfono / WhatsApp *</label>
+                  <label className="text-xs text-gray-400 mb-1 block">Teléfono / WhatsApp (opcional)</label>
                   <input
                     name="cliente_telefono"
-                    required
                     placeholder="Ej: 3541-629056"
                     className="w-full bg-surface-700 border border-surface-600 rounded-lg px-3 py-2.5 text-sm placeholder-gray-500"
                   />
@@ -355,7 +354,7 @@ export default function NuevaOrden() {
               <label className="text-xs text-gray-400 mb-1 block">Repuestos necesarios (opcional)</label>
               <RepuestosListInput name="repuestos_json" />
               <p className="text-[0.65rem] text-gray-600 mt-1">
-                Buscá en la lista de BYTE o escribí libre. Podés agregar varios.
+                Podés agregar varios repuestos necesarios.
               </p>
             </div>
           </div>

@@ -1,16 +1,14 @@
 export const dynamic = "force-dynamic";
 
 import { getRepuestosPendientes, getOrdenesActivas } from "@/lib/actions/repuestos";
-import { fetchPriceList } from "@/lib/actions/price-list";
 import { getOrdersToday } from "@/lib/actions/orders";
 import { ProveedoresBoard } from "./proveedores-board";
-import { PriceList } from "./price-list";
+import { RepuestosForm } from "./repuestos-form";
 import { IngresosHoy } from "./ingresos-hoy";
 
 export default async function ProveedoresPage() {
-  const [repuestos, priceData, ingresosHoy, ordenesActivas] = await Promise.all([
+  const [repuestos, ingresosHoy, ordenesActivas] = await Promise.all([
     getRepuestosPendientes(),
-    fetchPriceList(),
     getOrdersToday(),
     getOrdenesActivas(),
   ]);
@@ -33,7 +31,7 @@ export default async function ProveedoresPage() {
         initialVcp={vcp}
       />
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        <PriceList data={priceData} ordenesActivas={ordenesActivas} />
+        <RepuestosForm ordenesActivas={ordenesActivas} />
         <IngresosHoy data={ingresosHoy as any} />
       </div>
     </div>

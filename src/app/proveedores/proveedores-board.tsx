@@ -212,10 +212,13 @@ export function ProveedoresBoard({
     return `Hola, ¿como estas? Te paso la lista de repuestos que necesito:\n\n${lista}\n\nAvisame disponibilidad y precio. Gracias!`;
   }
 
-  // Pre-compute WhatsApp URLs so the link can be rendered as a real <a>
-  const waUrlCordoba =
-    telCordoba && cordoba.length > 0 ? buildWaUrl(telCordoba, buildMensaje(cordoba)) : "";
-  const waUrlVcp = telVcp && vcp.length > 0 ? buildWaUrl(telVcp, buildMensaje(vcp)) : "";
+  // Pre-compute WhatsApp URLs — with message if items exist, without if empty
+  const waUrlCordoba = telCordoba
+    ? cordoba.length > 0 ? buildWaUrl(telCordoba, buildMensaje(cordoba)) : buildWaUrl(telCordoba, "")
+    : "";
+  const waUrlVcp = telVcp
+    ? vcp.length > 0 ? buildWaUrl(telVcp, buildMensaje(vcp)) : buildWaUrl(telVcp, "")
+    : "";
 
   async function handleWhatsAppMarkPedidos(proveedor: "cordoba" | "vcp") {
     // Optimistic clear (link already opened via real <a> navigation)
@@ -507,19 +510,20 @@ function ProveedorColumn({
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={onWhatsAppClick}
+              onClick={items.length > 0 ? onWhatsAppClick : undefined}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors ml-auto"
             >
               <MessageCircle className="w-3.5 h-3.5" />
-              Enviar por WhatsApp
+              {items.length > 0 ? "Enviar por WhatsApp" : "Abrir WhatsApp"}
             </a>
           ) : (
             <button
               disabled
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 text-white opacity-40 ml-auto cursor-not-allowed"
+              title="Ingresá el teléfono del proveedor"
             >
               <MessageCircle className="w-3.5 h-3.5" />
-              Enviar por WhatsApp
+              Abrir WhatsApp
             </button>
           )}
         </div>

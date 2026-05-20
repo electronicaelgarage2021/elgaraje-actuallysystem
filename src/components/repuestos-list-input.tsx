@@ -47,7 +47,7 @@ export function RepuestosListInput({ name }: Props) {
               defaultValue={entry.value}
               placeholder={
                 idx === 0
-                  ? "Buscar en lista de precios o escribir libre..."
+                  ? "Ej: Modulo Samsung A54"
                   : "Otro repuesto..."
               }
               onChange={(v) => updateEntry(entry.id, v)}

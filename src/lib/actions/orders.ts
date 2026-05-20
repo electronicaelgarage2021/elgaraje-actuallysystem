@@ -198,6 +198,42 @@ export async function updateOrderEstado(
   estado: EstadoOrden
 ) {
   const db = createSupabaseServer();
+
+  // When marking as "entregado", auto-register remaining balance as paid (efectivo)
+  if (estado === "entregado") {
+    const { data: orden } = await db
+      .from("ordenes_reparacion")
+      .select("presupuesto, sena")
+      .eq("id", ordenId)
+      .single();
+
+    if (orden?.presupuesto) {
+      const presupuesto = Number(orden.presupuesto);
+      const sena = Number(orden.sena || 0);
+      const restante = presupuesto - sena;
+
+      if (restante > 0) {
+        // Check if a final payment already exists
+        const { data: pagosExistentes } = await db
+          .from("pagos")
+          .select("id")
+          .eq("orden_id", ordenId)
+          .eq("tipo", "pago_final");
+
+        if (!pagosExistentes || pagosExistentes.length === 0) {
+          await db.from("pagos").insert({
+            orden_id: ordenId,
+            monto: restante,
+            tipo: "pago_final",
+            metodo: "efectivo",
+            nota: "Pago completado al entregar",
+          });
+          await db.from("ordenes_reparacion").update({ pago_total: restante }).eq("id", ordenId);
+        }
+      }
+    }
+  }
+
   const { error } = await db
     .from("ordenes_reparacion")
     .update({ estado })
@@ -206,6 +242,7 @@ export async function updateOrderEstado(
   revalidatePath("/");
   revalidatePath("/ordenes");
   revalidatePath(`/ordenes/${ordenId}`);
+  revalidatePath("/caja");
 }
 
 export async function registerPayment(formData: FormData) {
@@ -270,6 +307,31 @@ export async function deletePayment(paymentId: string, ordenId: string) {
   revalidatePath("/");
   revalidatePath("/ordenes");
   revalidatePath(`/ordenes/${ordenId}`);
+}
+
+export async function deletePagoCaja(paymentId: string) {
+  const db = createSupabaseServer();
+  const { data: pago, error: fetchError } = await db
+    .from("pagos")
+    .select("*, orden_id")
+    .eq("id", paymentId)
+    .single();
+  if (fetchError) throw fetchError;
+
+  const { error } = await db.from("pagos").delete().eq("id", paymentId);
+  if (error) throw error;
+
+  if (pago.orden_id) {
+    if (pago.tipo === "sena") {
+      await db.from("ordenes_reparacion").update({ sena: null }).eq("id", pago.orden_id);
+    } else if (pago.tipo === "pago_final") {
+      await db.from("ordenes_reparacion").update({ pago_total: null }).eq("id", pago.orden_id);
+    }
+  }
+
+  revalidatePath("/caja");
+  revalidatePath("/");
+  revalidatePath("/ordenes");
 }
 
 export async function exportOrders() {
