@@ -118,7 +118,6 @@
 }
 .card-hover:hover {
   background: #242424;
-  transform: translateY(-1px);
 }
 
 /* Fade-in animation */
