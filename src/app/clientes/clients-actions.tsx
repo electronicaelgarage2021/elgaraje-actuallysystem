@@ -38,7 +38,9 @@ export function EditClientButton({ client }: { client: Cliente }) {
       >
         <Pencil className="w-4 h-4" />
       </button>
-      <ClientFormModal open={open} onClose={() => setOpen(false)} client={client} />
+      {open && (
+        <ClientFormModal open={open} onClose={() => setOpen(false)} client={client} />
+      )}
     </>
   );
 }

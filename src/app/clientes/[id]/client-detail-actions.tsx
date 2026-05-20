@@ -38,7 +38,9 @@ export function ClientDetailActions({ client }: { client: Cliente }) {
           {deleting ? "Eliminando..." : "Eliminar"}
         </button>
       </div>
-      <ClientFormModal open={editOpen} onClose={() => setEditOpen(false)} client={client} />
+      {editOpen && (
+        <ClientFormModal open={editOpen} onClose={() => setEditOpen(false)} client={client} />
+      )}
     </>
   );
 }
