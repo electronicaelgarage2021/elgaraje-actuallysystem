@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Calendar } from "lucide-react";
 
-type RangeKey = "hoy" | "esta_semana" | "ultima_semana" | "ultimos_10" | "ultimo_mes" | "personalizado";
+type RangeKey = "hoy" | "esta_semana" | "ultimos_7" | "ultima_semana" | "ultimos_10" | "ultimo_mes" | "personalizado";
 
 interface CajaDatePickerProps {
   desde: string;
@@ -38,6 +38,11 @@ function getRangeForKey(key: RangeKey): { desde: string; hasta: string } | null 
       const monday = getMondayOfWeek(today);
       return { desde: toDateStr(monday), hasta: toDateStr(today) };
     }
+    case "ultimos_7": {
+      const sevenAgo = new Date(today);
+      sevenAgo.setDate(today.getDate() - 6);
+      return { desde: toDateStr(sevenAgo), hasta: toDateStr(today) };
+    }
     case "ultima_semana": {
       const lastWeekDay = new Date(today);
       lastWeekDay.setDate(today.getDate() - 7);
@@ -61,10 +66,10 @@ function getRangeForKey(key: RangeKey): { desde: string; hasta: string } | null 
 }
 
 function detectActiveKey(desde: string, hasta: string, periodo?: string): RangeKey {
-  if (periodo && ["hoy", "esta_semana", "ultima_semana", "ultimos_10", "ultimo_mes"].includes(periodo)) {
+  if (periodo && ["hoy", "esta_semana", "ultimos_7", "ultima_semana", "ultimos_10", "ultimo_mes"].includes(periodo)) {
     return periodo as RangeKey;
   }
-  const keys: RangeKey[] = ["hoy", "esta_semana", "ultima_semana", "ultimos_10", "ultimo_mes"];
+  const keys: RangeKey[] = ["hoy", "esta_semana", "ultimos_7", "ultima_semana", "ultimos_10", "ultimo_mes"];
   for (const key of keys) {
     const range = getRangeForKey(key);
     if (range && range.desde === desde && range.hasta === hasta) return key;
@@ -75,7 +80,8 @@ function detectActiveKey(desde: string, hasta: string, periodo?: string): RangeK
 const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "hoy", label: "Hoy" },
   { key: "esta_semana", label: "Esta semana" },
-  { key: "ultima_semana", label: "Última semana" },
+  { key: "ultimos_7", label: "Últimos 7 días" },
+  { key: "ultima_semana", label: "Semana anterior" },
   { key: "ultimos_10", label: "Últimos 10 días" },
   { key: "ultimo_mes", label: "Último mes" },
   { key: "personalizado", label: "Personalizado" },
