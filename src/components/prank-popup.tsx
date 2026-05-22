@@ -19,11 +19,6 @@ export function PrankPopup() {
   const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
-    const key = "prank_shown_date";
-    const today = new Date().toISOString().split("T")[0];
-    if (localStorage.getItem(key) === today) return;
-    localStorage.setItem(key, today);
-
     const p: Particle[] = [];
     for (let i = 0; i < 60; i++) {
       p.push({
