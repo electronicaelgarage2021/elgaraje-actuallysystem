@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { PWARegister } from "@/components/pwa-register";
 import { PinGuard } from "@/components/pin-guard";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
+import { PrankPopup } from "@/components/prank-popup";
 import "./globals.css";
 
 const inter = Inter({
@@ -49,6 +50,7 @@ export default function RootLayout({
           <PinGuard>
             <PWARegister />
             <KeyboardShortcuts />
+            <PrankPopup />
             <Sidebar />
             <main className="ml-64 flex-1 min-h-screen overflow-y-auto scrollbar-thin">
               <div className="p-4 md:p-8 max-w-6xl mx-auto">{children}</div>
