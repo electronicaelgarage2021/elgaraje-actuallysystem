@@ -298,7 +298,7 @@ export default async function OrdenDetalle({
       )}
 
       {/* Action buttons */}
-      <OrderBottomActions ordenId={id} />
+      <OrderBottomActions ordenId={id} sena={orden.sena} />
     </div>
   );
 }

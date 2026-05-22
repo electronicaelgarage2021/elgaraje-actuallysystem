@@ -334,6 +334,33 @@ export async function deletePagoCaja(paymentId: string) {
   revalidatePath("/ordenes");
 }
 
+export async function returnWithoutRepair(ordenId: string) {
+  const db = createSupabaseServer();
+
+  // Delete all payments (señas) for this order
+  const { data: pagos } = await db
+    .from("pagos")
+    .select("id, monto, tipo")
+    .eq("orden_id", ordenId);
+
+  if (pagos && pagos.length > 0) {
+    await db.from("pagos").delete().eq("orden_id", ordenId);
+  }
+
+  // Mark as entregado, reset sena and pago_total
+  await db
+    .from("ordenes_reparacion")
+    .update({ estado: "entregado", sena: null, pago_total: null })
+    .eq("id", ordenId);
+
+  revalidatePath("/");
+  revalidatePath("/ordenes");
+  revalidatePath(`/ordenes/${ordenId}`);
+  revalidatePath("/caja");
+
+  return pagos || [];
+}
+
 export async function exportOrders() {
   const db = createSupabaseServer();
   const { data, error } = await db
