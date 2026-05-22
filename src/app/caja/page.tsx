@@ -66,7 +66,7 @@ export default async function CajaPage({
     ...pagos.map((p: any) => ({ type: "pago" as const, id: p.id, monto: Number(p.monto), metodo: p.metodo, created_at: p.created_at, tipo: p.tipo, orden: p.orden })),
     ...ventas.map((v: any) => ({ type: "venta" as const, id: v.id, monto: Number(v.monto), metodo: v.metodo, created_at: v.created_at, producto: v.producto, nota: v.nota })),
     ...gastos.map((g: any) => ({ type: "gasto" as const, id: g.id, monto: Number(g.monto), metodo: g.metodo, created_at: g.created_at, descripcion: g.descripcion, categoria: g.categoria })),
-  ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const totalGastos = gastos.reduce((sum: number, g: any) => sum + Number(g.monto), 0);
   const totalPagos = pagos.reduce((sum: number, p: any) => sum + Number(p.monto), 0);

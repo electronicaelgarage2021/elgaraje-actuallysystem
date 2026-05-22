@@ -61,6 +61,15 @@ export function buildWhatsAppUrl(telefono: string, mensaje: string) {
   return `https://wa.me/${fullTel}?text=${encodeURIComponent(mensaje)}`;
 }
 
+export function isSinReparacion(observaciones: string | null | undefined): boolean {
+  return !!observaciones?.includes("[SIN_REPARACION]");
+}
+
+export function getDevolucionMonto(observaciones: string | null | undefined): number | null {
+  const match = observaciones?.match(/\[DEVOLUCION:(\d+(?:\.\d+)?)\]/);
+  return match ? Number(match[1]) : null;
+}
+
 export function buildMensajeEntrega(
   clienteNombre: string,
   dispositivo: string

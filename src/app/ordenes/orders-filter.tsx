@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ESTADOS } from "@/lib/constants";
+import { ESTADOS, isSinReparacion } from "@/lib/constants";
 import { Search, X } from "lucide-react";
 import { EstadoBadge } from "@/components/estado-badge";
 import { DashboardEntregarBtn } from "@/components/dashboard-entregar-btn";
@@ -18,6 +18,7 @@ interface Orden {
   problema: string;
   estado: EstadoOrden;
   presupuesto: number | null;
+  observaciones: string | null;
   fecha_ingreso: string;
   cliente: { nombre: string; dni: string | null; telefono: string | null } | null;
 }
@@ -147,7 +148,7 @@ export function OrdersFilter({ ordenes }: { ordenes: Orden[] }) {
                     </td>
                     <td className="px-4 py-3">{orden.dispositivo}</td>
                     <td className="px-4 py-3 text-gray-300 max-w-48 truncate">{orden.problema}</td>
-                    <td className="px-4 py-3"><EstadoBadge estado={orden.estado} /></td>
+                    <td className="px-4 py-3"><EstadoBadge estado={orden.estado} sinReparacion={isSinReparacion(orden.observaciones)} /></td>
                     <td className="px-4 py-3">
                       {orden.presupuesto ? (
                         <span className="font-medium">${orden.presupuesto.toLocaleString("es-AR")}</span>

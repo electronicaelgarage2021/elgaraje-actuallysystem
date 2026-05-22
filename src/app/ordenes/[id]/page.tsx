@@ -16,7 +16,7 @@ import { es } from "date-fns/locale";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, User, Smartphone, Wrench, Calendar, DollarSign } from "lucide-react";
-import { buildWhatsAppUrl } from "@/lib/constants";
+import { buildWhatsAppUrl, isSinReparacion, getDevolucionMonto } from "@/lib/constants";
 
 export default async function OrdenDetalle({
   params,
@@ -76,7 +76,7 @@ export default async function OrdenDetalle({
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">Orden #{orden.numero}</h1>
-            <EstadoBadge estado={orden.estado} />
+            <EstadoBadge estado={orden.estado} sinReparacion={isSinReparacion(orden.observaciones)} />
           </div>
           <p className="text-gray-400 text-sm mt-1">
             Ingreso: {format(new Date(orden.fecha_ingreso), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
@@ -267,6 +267,20 @@ export default async function OrdenDetalle({
           </div>
         </div>
       </div>
+
+      {/* Sin reparación alert */}
+      {isSinReparacion(orden.observaciones) && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6">
+          <p className="text-sm font-semibold text-yellow-400">Entregado sin reparación</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Este equipo fue devuelto al cliente sin realizarse la reparación.
+            {(() => {
+              const dev = getDevolucionMonto(orden.observaciones);
+              return dev ? ` Se devolvieron $${dev.toLocaleString("es-AR")} al cliente.` : "";
+            })()}
+          </p>
+        </div>
+      )}
 
       {/* Warranty */}
       <div className="bg-surface-800 border border-surface-600 rounded-xl p-5 mb-6">

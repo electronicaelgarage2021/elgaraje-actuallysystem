@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { updateOrderEstado, cancelOrder } from "@/lib/actions/orders";
-import { buildWhatsAppUrl, buildMensajeEntrega } from "@/lib/constants";
+import { buildWhatsAppUrl, buildMensajeEntrega, isSinReparacion } from "@/lib/constants";
 import type { EstadoOrden } from "@/lib/types";
 import { Eye, DollarSign, MessageCircle, GripVertical, X } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +14,7 @@ interface KanbanOrden {
   problema: string;
   estado: EstadoOrden;
   presupuesto: number | null;
+  observaciones: string | null;
   prioridad: boolean;
   fecha_ingreso: string;
   cliente: {
@@ -167,6 +168,11 @@ export function KanbanBoard({ initialColumnas }: { initialColumnas: KanbanColumn
                         <span className="text-[0.65rem] text-gray-500 font-mono">#{orden.numero}</span>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {isSinReparacion(orden.observaciones) && (
+                          <span className="text-[0.6rem] bg-yellow-500/15 text-yellow-400 px-1.5 py-0.5 rounded font-medium">
+                            Sin rep.
+                          </span>
+                        )}
                         {orden.prioridad && (
                           <span className="text-[0.6rem] bg-brand-red/15 text-brand-red px-1.5 py-0.5 rounded font-medium">
                             ⚡

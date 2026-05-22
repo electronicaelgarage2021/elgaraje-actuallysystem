@@ -337,26 +337,38 @@ export async function deletePagoCaja(paymentId: string) {
 export async function returnWithoutRepair(ordenId: string) {
   const db = createSupabaseServer();
 
-  // Delete all payments (señas) for this order
+  // Get order info + payments
+  const { data: orden } = await db
+    .from("ordenes_reparacion")
+    .select("observaciones")
+    .eq("id", ordenId)
+    .single();
+
   const { data: pagos } = await db
     .from("pagos")
     .select("id, monto, tipo")
     .eq("orden_id", ordenId);
 
+  const totalDevuelto = pagos?.reduce((s, p) => s + Number(p.monto), 0) || 0;
+
   if (pagos && pagos.length > 0) {
     await db.from("pagos").delete().eq("orden_id", ordenId);
   }
 
-  // Mark as entregado, reset sena and pago_total
+  // Build tags for observaciones
+  let obs = (orden?.observaciones || "").replace(/\[SIN_REPARACION\]/g, "").replace(/\[DEVOLUCION:\d+(?:\.\d+)?\]/g, "").trim();
+  obs = `${obs} [SIN_REPARACION]${totalDevuelto > 0 ? ` [DEVOLUCION:${totalDevuelto}]` : ""}`.trim();
+
   await db
     .from("ordenes_reparacion")
-    .update({ estado: "entregado", sena: null, pago_total: null })
+    .update({ estado: "entregado", sena: null, pago_total: null, observaciones: obs })
     .eq("id", ordenId);
 
   revalidatePath("/");
   revalidatePath("/ordenes");
   revalidatePath(`/ordenes/${ordenId}`);
   revalidatePath("/caja");
+  revalidatePath("/kanban");
 
   return pagos || [];
 }
