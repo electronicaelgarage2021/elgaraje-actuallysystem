@@ -2,7 +2,21 @@
 
 import { useState, useEffect } from "react";
 
-const EMOJIS = ["💖", "🌸", "💜", "🌺", "💗", "🌷", "💛", "🌻", "💚", "🌹", "💕", "🌼", "🩷", "🪻", "🩵", "🌈"];
+const MESSAGES = [
+  { text: "Hecho por tu reina\nde la primavera", emoji: "👑" },
+  { text: "Dale Marc,\nhoy se factura", emoji: "💰" },
+  { text: "Marc,\nel cirujano de celulares", emoji: "🔬" },
+  { text: "Si Marc no lo arregla,\nnadie puede", emoji: "🏆" },
+  { text: "Otro día, otro celular\nsalvado por Marc", emoji: "🦸" },
+  { text: "Marc machine:\nmodo bestia activado", emoji: "🔥" },
+  { text: "Los celulares rotos\nle tienen miedo a Marc", emoji: "😈" },
+  { text: "Marc no repara,\nresucita", emoji: "⚡" },
+  { text: "Buen día Marc,\nhoy rompés todo...\nfacturando", emoji: "💸" },
+  { text: "El Garage no funciona\nsin vos, Marc", emoji: "🫡" },
+  { text: "Marc, el que nunca deja\nun equipo atrás", emoji: "🎖️" },
+];
+
+const EMOJIS = ["💪", "🔱", "🏋️", "🏋️‍♂️", "💪🏻", "🦾", "⚔️", "🛡️", "🔥", "💥", "🏆", "🎯", "⚡", "🦍", "🐉", "👊"];
 const COLORS = ["#FF00FF", "#FF1493", "#FF69B4", "#FFD700", "#00FF7F", "#00FFFF", "#FF4500", "#DA70D6", "#7FFF00", "#FF6EC7"];
 
 interface Particle {
@@ -17,10 +31,13 @@ interface Particle {
 export function PrankPopup() {
   const [show, setShow] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [message, setMessage] = useState(MESSAGES[0]);
 
   useEffect(() => {
     if (sessionStorage.getItem("prank_shown")) return;
     sessionStorage.setItem("prank_shown", "1");
+
+    setMessage(MESSAGES[Math.floor(Math.random() * MESSAGES.length)]);
 
     const p: Particle[] = [];
     for (let i = 0; i < 60; i++) {
@@ -38,8 +55,6 @@ export function PrankPopup() {
   }, []);
 
   if (!show) return null;
-
-  const randomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 
   return (
     <div
@@ -81,7 +96,6 @@ export function PrankPopup() {
         }
       `}</style>
 
-      {/* Falling emojis */}
       {particles.map((p) => (
         <span
           key={p.id}
@@ -99,7 +113,6 @@ export function PrankPopup() {
         </span>
       ))}
 
-      {/* Main content */}
       <div
         className="relative z-10 text-center px-8 py-12 rounded-3xl max-w-lg mx-4"
         style={{
@@ -109,21 +122,19 @@ export function PrankPopup() {
           animation: "prank-pulse 2s ease-in-out infinite, prank-border 3s linear infinite",
         }}
       >
-        <div className="text-6xl mb-4">
-          {"👑"}
-        </div>
+        <div className="text-6xl mb-4">{message.emoji}</div>
         <h1
-          className="text-3xl md:text-4xl font-black mb-3 leading-tight"
+          className="text-3xl md:text-4xl font-black mb-3 leading-tight whitespace-pre-line"
           style={{
             animation: "prank-rainbow 3s linear infinite, prank-glow 3s linear infinite",
             fontFamily: "'Anton', sans-serif",
             letterSpacing: 2,
           }}
         >
-          Hecho por tu reina<br />de la primavera
+          {message.text}
         </h1>
         <div className="text-4xl mt-4 flex justify-center gap-2">
-          {["🌸", "💖", "🌺", "💗", "🌷"].map((e, i) => (
+          {["💪", "🔱", "🏋️", "⚔️", "🦾"].map((e, i) => (
             <span
               key={i}
               style={{
