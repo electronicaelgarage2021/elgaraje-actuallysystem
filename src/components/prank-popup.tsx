@@ -19,6 +19,9 @@ export function PrankPopup() {
   const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
+    if (sessionStorage.getItem("prank_shown")) return;
+    sessionStorage.setItem("prank_shown", "1");
+
     const p: Particle[] = [];
     for (let i = 0; i < 60; i++) {
       p.push({
