@@ -1,4 +1,4 @@
-const CACHE_NAME = "elgarage-v1";
+const CACHE_NAME = "elgarage-v2";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
