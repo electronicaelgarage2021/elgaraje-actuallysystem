@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Calendar } from "lucide-react";
 
-type RangeKey = "hoy" | "esta_semana" | "ultimos_7" | "ultima_semana" | "ultimos_10" | "ultimo_mes" | "personalizado";
+type RangeKey = "hoy" | "esta_semana" | "ultimos_7" | "ultima_semana" | "ultimos_10" | "este_mes" | "ultimo_mes" | "personalizado";
 
 interface CajaDatePickerProps {
   desde: string;
@@ -56,9 +56,14 @@ function getRangeForKey(key: RangeKey): { desde: string; hasta: string } | null 
       tenAgo.setDate(today.getDate() - 9);
       return { desde: toDateStr(tenAgo), hasta: toDateStr(today) };
     }
-    case "ultimo_mes": {
+    case "este_mes": {
       const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       return { desde: toDateStr(firstOfMonth), hasta: toDateStr(today) };
+    }
+    case "ultimo_mes": {
+      const thirtyAgo = new Date(today);
+      thirtyAgo.setDate(today.getDate() - 29);
+      return { desde: toDateStr(thirtyAgo), hasta: toDateStr(today) };
     }
     default:
       return null;
@@ -66,10 +71,10 @@ function getRangeForKey(key: RangeKey): { desde: string; hasta: string } | null 
 }
 
 function detectActiveKey(desde: string, hasta: string, periodo?: string): RangeKey {
-  if (periodo && ["hoy", "esta_semana", "ultimos_7", "ultima_semana", "ultimos_10", "ultimo_mes"].includes(periodo)) {
+  if (periodo && ["hoy", "esta_semana", "ultimos_7", "ultima_semana", "ultimos_10", "este_mes", "ultimo_mes"].includes(periodo)) {
     return periodo as RangeKey;
   }
-  const keys: RangeKey[] = ["hoy", "esta_semana", "ultimos_7", "ultima_semana", "ultimos_10", "ultimo_mes"];
+  const keys: RangeKey[] = ["hoy", "esta_semana", "ultimos_7", "ultima_semana", "ultimos_10", "este_mes", "ultimo_mes"];
   for (const key of keys) {
     const range = getRangeForKey(key);
     if (range && range.desde === desde && range.hasta === hasta) return key;
@@ -83,7 +88,8 @@ const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "ultimos_7", label: "Últimos 7 días" },
   { key: "ultima_semana", label: "Semana anterior" },
   { key: "ultimos_10", label: "Últimos 10 días" },
-  { key: "ultimo_mes", label: "Último mes" },
+  { key: "este_mes", label: "Este mes" },
+  { key: "ultimo_mes", label: "Últimos 30 días" },
   { key: "personalizado", label: "Personalizado" },
 ];
 
