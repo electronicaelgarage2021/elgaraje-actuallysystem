@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const MESSAGES = [
   { text: "Hecho por tu reina\nde la primavera", emoji: "👑" },
@@ -32,8 +33,10 @@ export function PrankPopup() {
   const [show, setShow] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [message, setMessage] = useState(MESSAGES[0]);
+  const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname === "/login") return;
     if (sessionStorage.getItem("prank_shown")) return;
     sessionStorage.setItem("prank_shown", "1");
 
@@ -52,7 +55,7 @@ export function PrankPopup() {
     }
     setParticles(p);
     setShow(true);
-  }, []);
+  }, [pathname]);
 
   if (!show) return null;
 

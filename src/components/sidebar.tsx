@@ -13,10 +13,12 @@ import {
   ShoppingBag,
   Truck,
   CalendarDays,
+  LogOut,
 } from "lucide-react";
 import { Logo } from "./logo";
 import { ThemeToggle } from "./theme-toggle";
 import { NEGOCIO } from "@/lib/constants";
+import { logout } from "@/lib/actions/auth";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -32,6 +34,8 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+
+  if (pathname === "/login") return null;
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-surface-800 border-r border-surface-600 flex flex-col z-50">
@@ -76,7 +80,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-surface-600">
+      <div className="p-4 border-t border-surface-600 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-brand-teal/20 flex items-center justify-center text-brand-teal text-xs font-bold">
@@ -89,6 +93,15 @@ export function Sidebar() {
           </div>
           <ThemeToggle />
         </div>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-gray-400 hover:text-brand-red hover:bg-brand-red/10 border border-surface-600 hover:border-brand-red/30 transition-all"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Cerrar sesión
+          </button>
+        </form>
       </div>
     </aside>
   );

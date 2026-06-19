@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sidebar } from "@/components/sidebar";
 import { PWARegister } from "@/components/pwa-register";
-import { PinGuard } from "@/components/pin-guard";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PrankPopup } from "@/components/prank-popup";
 import "./globals.css";
@@ -47,15 +46,13 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex font-sans">
         <TooltipProvider>
-          <PinGuard>
-            <PWARegister />
-            <KeyboardShortcuts />
-            <PrankPopup />
-            <Sidebar />
-            <main className="ml-64 flex-1 min-h-screen overflow-y-auto scrollbar-thin">
-              <div className="p-4 md:p-8 max-w-6xl mx-auto">{children}</div>
-            </main>
-          </PinGuard>
+          <PWARegister />
+          <KeyboardShortcuts />
+          <PrankPopup />
+          <Sidebar />
+          <main className="ml-64 flex-1 min-h-screen overflow-y-auto scrollbar-thin">
+            <div className="p-4 md:p-8 max-w-6xl mx-auto">{children}</div>
+          </main>
         </TooltipProvider>
       </body>
     </html>
