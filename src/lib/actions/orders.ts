@@ -373,6 +373,18 @@ export async function returnWithoutRepair(ordenId: string) {
   return pagos || [];
 }
 
+export async function setPosiciones(ids: string[]) {
+  if (!ids.length) return;
+  const db = createSupabaseServer();
+  await Promise.all(
+    ids.map((id, i) =>
+      db.from("ordenes_reparacion").update({ posicion: i }).eq("id", id)
+    )
+  );
+  revalidatePath("/kanban");
+  revalidatePath("/ordenes");
+}
+
 export async function exportOrders() {
   const db = createSupabaseServer();
   const { data, error } = await db

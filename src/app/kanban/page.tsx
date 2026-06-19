@@ -16,7 +16,9 @@ export default async function KanbanPage() {
 
   const columnas = COLUMNAS.map((col) => ({
     ...col,
-    ordenes: ordenes.filter((o: any) => o.estado === col.estado),
+    ordenes: ordenes
+      .filter((o: any) => o.estado === col.estado)
+      .sort((a: any, b: any) => (a.posicion ?? 0) - (b.posicion ?? 0)),
   }));
 
   return (
