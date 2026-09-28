@@ -4,7 +4,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function createGasto(formData: FormData) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const descripcion = formData.get("descripcion") as string;
   const monto = Number(formData.get("monto"));
   const categoria = (formData.get("categoria") as string) || "otro";
@@ -22,14 +22,14 @@ export async function createGasto(formData: FormData) {
 }
 
 export async function deleteGasto(id: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { error } = await db.from("gastos").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/caja");
 }
 
 export async function getDailyGastos(fecha?: string, fechaHasta?: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const desde = fecha || new Date().toISOString().split("T")[0];
   const hasta = fechaHasta || desde;
 

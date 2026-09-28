@@ -6,7 +6,7 @@ import type { EstadoOrden } from "@/lib/types";
 
 export async function getOrdersToday() {
   try {
-    const db = createSupabaseServer();
+    const db = await createSupabaseServer();
     const hoy = new Date().toISOString().split("T")[0];
     const { data, error } = await db
       .from("ordenes_reparacion")
@@ -26,7 +26,7 @@ export async function getOrders(filters?: {
   busqueda?: string;
 }) {
   try {
-    const db = createSupabaseServer();
+    const db = await createSupabaseServer();
     let query = db
       .from("ordenes_reparacion")
       .select("*, cliente:clientes(*)")
@@ -50,7 +50,7 @@ export async function getOrders(filters?: {
 }
 
 export async function getOrder(id: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("ordenes_reparacion")
     .select("*, cliente:clientes(*)")
@@ -61,7 +61,7 @@ export async function getOrder(id: string) {
 }
 
 export async function getOrderHistory(ordenId: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("historial_estados")
     .select("*")
@@ -72,7 +72,7 @@ export async function getOrderHistory(ordenId: string) {
 }
 
 export async function getOrderPayments(ordenId: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("pagos")
     .select("*")
@@ -83,7 +83,7 @@ export async function getOrderPayments(ordenId: string) {
 }
 
 export async function createOrder(formData: FormData) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
 
   let clienteId = formData.get("cliente_id") as string;
 
@@ -153,7 +153,7 @@ export async function createOrder(formData: FormData) {
 }
 
 export async function updateOrder(id: string, formData: FormData) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const presupuesto = formData.get("presupuesto");
 
   const { error } = await db
@@ -172,7 +172,7 @@ export async function updateOrder(id: string, formData: FormData) {
 }
 
 export async function cancelOrder(id: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { error } = await db
     .from("ordenes_reparacion")
     .delete()
@@ -184,7 +184,7 @@ export async function cancelOrder(id: string) {
 }
 
 export async function updateOrderWarranty(id: string, garantia: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { error } = await db
     .from("ordenes_reparacion")
     .update({ garantia })
@@ -197,7 +197,7 @@ export async function updateOrderEstado(
   ordenId: string,
   estado: EstadoOrden
 ) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
 
   // When marking as "entregado", auto-register remaining balance as paid (efectivo)
   if (estado === "entregado") {
@@ -246,7 +246,7 @@ export async function updateOrderEstado(
 }
 
 export async function registerPayment(formData: FormData) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const ordenId = formData.get("orden_id") as string;
   const monto = Number(formData.get("monto"));
   const tipo = formData.get("tipo") as string;
@@ -281,7 +281,7 @@ export async function registerPayment(formData: FormData) {
 }
 
 export async function deletePayment(paymentId: string, ordenId: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
 
   // Get the payment first to know its type and amount
   const { data: pago, error: fetchError } = await db
@@ -310,7 +310,7 @@ export async function deletePayment(paymentId: string, ordenId: string) {
 }
 
 export async function deletePagoCaja(paymentId: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data: pago, error: fetchError } = await db
     .from("pagos")
     .select("*, orden_id")
@@ -335,7 +335,7 @@ export async function deletePagoCaja(paymentId: string) {
 }
 
 export async function returnWithoutRepair(ordenId: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
 
   // Get order info + payments
   const { data: orden } = await db
@@ -375,7 +375,7 @@ export async function returnWithoutRepair(ordenId: string) {
 
 export async function setPosiciones(ids: string[]) {
   if (!ids.length) return;
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   await Promise.all(
     ids.map((id, i) =>
       db.from("ordenes_reparacion").update({ posicion: i }).eq("id", id)
@@ -386,7 +386,7 @@ export async function setPosiciones(ids: string[]) {
 }
 
 export async function exportOrders() {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("ordenes_reparacion")
     .select("*, cliente:clientes(nombre, telefono, dni)")
@@ -396,7 +396,7 @@ export async function exportOrders() {
 }
 
 export async function getDailyCash(fecha?: string, fechaHasta?: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const desde = fecha || new Date().toISOString().split("T")[0];
   const hasta = fechaHasta || desde;
 
@@ -412,7 +412,7 @@ export async function getDailyCash(fecha?: string, fechaHasta?: string) {
 }
 
 export async function getDailyVentas(fecha?: string, fechaHasta?: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const desde = fecha || new Date().toISOString().split("T")[0];
   const hasta = fechaHasta || desde;
 
@@ -428,7 +428,7 @@ export async function getDailyVentas(fecha?: string, fechaHasta?: string) {
 }
 
 export async function getDeviceHistory(dispositivo: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const searchTerm = dispositivo.trim();
   if (searchTerm.length < 3) return { count: 0, problemas: [] as { problema: string; count: number }[], avgPresupuesto: null };
 
@@ -465,7 +465,7 @@ export async function getDeviceHistory(dispositivo: string) {
 
 export async function getMonthlyStats() {
   try {
-    const db = createSupabaseServer();
+    const db = await createSupabaseServer();
     const now = new Date();
     const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
     const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split("T")[0];
@@ -561,7 +561,7 @@ export async function getMonthlyStats() {
 
 export async function getDashboardStats() {
   try {
-    const db = createSupabaseServer();
+    const db = await createSupabaseServer();
 
     const [ordenes, hoy] = await Promise.all([
       db

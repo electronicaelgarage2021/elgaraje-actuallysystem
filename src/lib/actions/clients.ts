@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 export async function getClients(busqueda?: string) {
   try {
-    const db = createSupabaseServer();
+    const db = await createSupabaseServer();
     let query = db
       .from("clientes")
       .select("*")
@@ -26,7 +26,7 @@ export async function getClients(busqueda?: string) {
 }
 
 export async function getClient(id: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("clientes")
     .select("*")
@@ -37,7 +37,7 @@ export async function getClient(id: string) {
 }
 
 export async function getClientOrders(clienteId: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("ordenes_reparacion")
     .select("*")
@@ -48,7 +48,7 @@ export async function getClientOrders(clienteId: string) {
 }
 
 export async function searchClients(term: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("clientes")
     .select("id, nombre, telefono, dni")
@@ -61,7 +61,7 @@ export async function searchClients(term: string) {
 }
 
 export async function createClient(formData: FormData) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("clientes")
     .insert({
@@ -79,7 +79,7 @@ export async function createClient(formData: FormData) {
 }
 
 export async function updateClient(id: string, formData: FormData) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { error } = await db
     .from("clientes")
     .update({
@@ -96,7 +96,7 @@ export async function updateClient(id: string, formData: FormData) {
 }
 
 export async function deleteClient(id: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { error } = await db.from("clientes").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/clientes");

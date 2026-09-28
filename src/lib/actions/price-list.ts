@@ -1,5 +1,7 @@
 "use server";
 
+import { requireSession } from "@/lib/supabase/server";
+
 const SHEET_ID = "1lSdnSLsJHQ4bjLFC2GtaI_G85fjogyti9JzL0QT_0qc";
 
 const TABS = [
@@ -39,6 +41,7 @@ export async function searchPriceList(query: string): Promise<PriceItem[]> {
 }
 
 export async function fetchPriceList(): Promise<PriceItem[]> {
+  await requireSession();
   try {
     const results = await Promise.all(
       TABS.map((tab) => fetchTab(tab).catch(() => []))

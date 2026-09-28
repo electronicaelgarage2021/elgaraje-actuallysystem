@@ -17,7 +17,7 @@ export async function getMonthActivity(
   year: number,
   month: number
 ): Promise<MonthActivity> {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
 
   const startDate = `${year}-${String(month).padStart(2, "0")}-01T00:00:00`;
   const endMonth = month === 12 ? 1 : month + 1;
@@ -97,7 +97,7 @@ export async function getMonthActivity(
 }
 
 export async function getDaySummary(fecha: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
 
   // Orders received on this date
   const { data: ingresadas } = await db

@@ -4,7 +4,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function getRepuestosPendientes() {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("repuestos")
     .select("*, orden:ordenes_reparacion(numero, dispositivo)")
@@ -15,7 +15,7 @@ export async function getRepuestosPendientes() {
 }
 
 export async function createRepuesto(nombre: string, ordenId?: string, precio?: number) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const insert: Record<string, unknown> = {
     nombre,
     orden_id: ordenId || null,
@@ -27,7 +27,7 @@ export async function createRepuesto(nombre: string, ordenId?: string, precio?: 
 }
 
 export async function getOrdenesActivas() {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { data, error } = await db
     .from("ordenes_reparacion")
     .select("id, numero, dispositivo, cliente:clientes(nombre)")
@@ -38,14 +38,14 @@ export async function getOrdenesActivas() {
 }
 
 export async function assignRepuesto(id: string, proveedor: "cordoba" | "vcp" | null) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { error } = await db.from("repuestos").update({ proveedor }).eq("id", id);
   if (error) throw error;
   revalidatePath("/proveedores");
 }
 
 export async function assignAllRepuestos(proveedor: "cordoba" | "vcp") {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   // Assign all unassigned repuestos to this provider
   const { error } = await db
     .from("repuestos")
@@ -57,7 +57,7 @@ export async function assignAllRepuestos(proveedor: "cordoba" | "vcp") {
 }
 
 export async function markRepuestosPedidos(proveedor: "cordoba" | "vcp") {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { error } = await db
     .from("repuestos")
     .update({ pedido: true })
@@ -68,7 +68,7 @@ export async function markRepuestosPedidos(proveedor: "cordoba" | "vcp") {
 }
 
 export async function deleteRepuesto(id: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const { error } = await db.from("repuestos").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/proveedores");

@@ -4,7 +4,7 @@ import { createSupabaseServer } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function getVentas(desde?: string, hasta?: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const today = new Date().toISOString().split("T")[0];
   const d = desde || today;
   const h = hasta || d;
@@ -21,7 +21,7 @@ export async function getVentas(desde?: string, hasta?: string) {
 }
 
 export async function createVenta(formData: FormData) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
 
   const producto = formData.get("producto") as string;
   const monto = Number(formData.get("monto"));
@@ -40,7 +40,7 @@ export async function createVenta(formData: FormData) {
 }
 
 export async function deleteVenta(id: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
 
   const { error } = await db.from("ventas").delete().eq("id", id);
 
@@ -50,7 +50,7 @@ export async function deleteVenta(id: string) {
 }
 
 export async function getVentasStats(desde?: string, hasta?: string) {
-  const db = createSupabaseServer();
+  const db = await createSupabaseServer();
   const today = new Date().toISOString().split("T")[0];
   const d = desde || today;
   const h = hasta || d;
